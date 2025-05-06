@@ -1,4 +1,15 @@
-# Slarmoo's Box Testing
+# lunarii's Box Testing
+
+This is a WIP. Do not try to run this. It will probably not work.
+
+Hello! This is is a fork of Slarmoo's Box that plans and is trying to attempt the following features;
+
+Way more customizable effects, such as distortion, chorus, etc.
+Amplitude modulation, analog synth/etc.
+Customizable envelopes, as in being able to change the attack, sustain, release and decay of a envelope.
+UI tweaks, I plan to keep things relatively the same, but I plan to add stuff like putting the note name on the note itself, kinda like FL Studio.
+Importing your own presets. I want you to be able to export a instrument you made as a JSON, name it, and then import it and have it appear in the dropdown for the instrument presets. 
+If you have suggestions, feel free to put them in discussion.
 
 Slarmoo's Box is an online tool for sketching and sharing instrumental music.
 You can find it [here](https://github.com/slarmoo/slarmoosbox/).
