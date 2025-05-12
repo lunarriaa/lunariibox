@@ -244,7 +244,7 @@ const enum SongTagCode {
 	harmonics           = CharCode.H, // added in BeepBox URL version 7
 	stringSustain       = CharCode.I, // added in BeepBox URL version 9
 //	                    = CharCode.J,
-//	                    = CharCode.K,
+	analog              = CharCode.K,
 	pan                 = CharCode.L, // added between 8 and 9, DEPRECATED
 	customChipWave      = CharCode.M, // added in JummBox URL version 1(?) for customChipWave
 	songTitle           = CharCode.N, // added in JummBox URL version 1(?) for songTitle
@@ -1603,6 +1603,7 @@ export class Instrument {
     // advloop addition
     public chipNoise: number = 1;
     public eqFilter: FilterSettings = new FilterSettings();
+    public stereoEnabled: boolean = true;
     public eqFilterType: boolean = false;
     public eqFilterSimpleCut: number = Config.filterSimpleCutRange - 1;
     public eqFilterSimplePeak: number = 0;
@@ -1929,6 +1930,9 @@ export class Instrument {
                 this.supersawShape = 0;
                 this.pulseWidth = Config.pulseWidthRange - 1;
                 this.decimalOffset = 0;
+                break;
+            case InstrumentType.analog:
+                this.chord = Config.chords.dictionary["simultaneous"].index;
                 break;
             default:
                 throw new Error("Unrecognized instrument type: " + type);
@@ -2305,6 +2309,8 @@ export class Instrument {
                 // Meh, waste of space and can be inaccurate. It will be recalc'ed when instrument loads.
                 //instrumentObject["customChipWaveIntegral"][i] = this.customChipWaveIntegral[i];
             }
+        } else if (this.type == InstrumentType.analog) {
+        // nothing to save
         } else if (this.type == InstrumentType.mod) {
             instrumentObject["modChannels"] = [];
             instrumentObject["modInstruments"] = [];
@@ -2725,6 +2731,10 @@ export class Instrument {
             }
             // this.chipWave = legacyWaveNames[instrumentObject["wave"]] != undefined ? legacyWaveNames[instrumentObject["wave"]] : modboxWaveNames[instrumentObject["wave"]] != undefined ? modboxWaveNames[instrumentObject["wave"]] : sandboxWaveNames[instrumentObject["wave"]] != undefined ? sandboxWaveNames[instrumentObject["wave"]] : zefboxWaveNames[instrumentObject["wave"]] != undefined ? zefboxWaveNames[instrumentObject["wave"]] : miscWaveNames[instrumentObject["wave"]] != undefined ? miscWaveNames[instrumentObject["wave"]] : paandorasboxWaveNames[instrumentObject["wave"]] != undefined ? paandorasboxWaveNames[instrumentObject["wave"]] : Config.chipWaves.findIndex(wave => wave.name == instrumentObject["wave"]); 
             if (this.chipWave == -1) this.chipWave = 1;
+        }
+
+        if (this.type == InstrumentType.analog) {
+            //  nothing to load yet
         }
 
         if (this.type == InstrumentType.fm || this.type == InstrumentType.fm6op) {
@@ -3209,7 +3219,7 @@ export class Song {
     private static readonly _latestSlarmoosBoxVersion: number = 5;
     // One-character variant detection at the start of URL to distinguish variants such as JummBox, Or Goldbox. "j" and "g" respectively
     //also "u" is ultrabox lol
-    private static readonly _variant = 0x73; //"s" ~ slarmoo's box
+    private static readonly _variant = 0x6C; //"l" ~ lumiine's box
 
     public title: string;
     public scale: number;
@@ -3973,6 +3983,9 @@ export class Song {
                     buffer.push(SongTagCode.stringSustain, base64IntToCharCode[instrument.stringSustain | (instrument.stringSustainType << 5)]);
                 } else if (instrument.type == InstrumentType.mod) {
                     // Handled down below. Could be moved, but meh.
+                } else if (instrument.type == InstrumentType.analog) {
+                    buffer.push(SongTagCode.analog);
+                    // Nothing to save yet
                 } else {
                     throw new Error("Unknown instrument type.");
                 }
@@ -5046,6 +5059,9 @@ export class Song {
                     instrument.decimalOffset = clamp(0, 99 + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                 }
 
+            } break;
+            case SongTagCode.analog: {
+              // nothing to load
             } break;
             case SongTagCode.stringSustain: {
                 const instrument: Instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
@@ -11940,6 +11956,8 @@ export class Synth {
             baseExpression = Config.chipBaseExpression;
         } else if (instrument.type == InstrumentType.harmonics) {
             baseExpression = Config.harmonicsBaseExpression;
+        } else if (instrument.type  == InstrumentType.analog) {
+            baseExpression = Config.analogBaseExpression;
         } else if (instrument.type == InstrumentType.pwm) {
             baseExpression = Config.pwmBaseExpression;
         } else if (instrument.type == InstrumentType.supersaw) {
@@ -12563,6 +12581,9 @@ export class Synth {
                 settingsExpressionMult *= Math.pow(2.0, 0.7 * (1.0 - useSustainStart / (Config.stringSustainRange - 1)));
 
             }
+            if (instrument.type == InstrumentType.analog) {
+                // nothing to compute
+            }
 
             const startFreq: number = Instrument.frequencyFromPitch(startPitch);
             if (instrument.type == InstrumentType.chip || instrument.type == InstrumentType.customChipWave || instrument.type == InstrumentType.harmonics || instrument.type == InstrumentType.pickedString || instrument.type == InstrumentType.spectrum || instrument.type == InstrumentType.pwm || instrument.type == InstrumentType.noise || instrument.type == InstrumentType.drumset) {
@@ -12974,6 +12995,8 @@ export class Synth {
                 Synth.fm6SynthFunctionCache[fingerprint] = new Function("Config", "Synth", wrappedFm6Synth)(Config, Synth);
             }
             return Synth.fm6SynthFunctionCache[fingerprint];
+        } else if (instrument.type == InstrumentType.analog) {
+            return Synth.analogSynth;
         } else {
             throw new Error("Unrecognized instrument type: " + instrument.type);
         }
@@ -13298,6 +13321,47 @@ export class Synth {
             Synth.loopableChipFunctionCache[instrumentState.unisonVoices][chipWaveLoopMode] = chipFunction;
         }
         chipFunction(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState);
+    }
+    private static analogSynth(synth: Synth, bufferIndex: number, roundedSamplesPerTick: number, tone: Tone, instrumentState: InstrumentState): void {
+        const data: Float32Array = synth.tempMonoInstrumentSampleBuffer!;
+        const waveforms = {
+            sine: (phase: number) => Math.sin(2 * Math.PI * phase),
+            square: (phase: number) => (phase < 0.5 ? 1 : -1),
+            triangle: (phase: number) => 4 * Math.abs(phase - 0.5) - 1,
+            sawtooth: (phase: number) => 2 * (phase - Math.floor(phase + 0.5)),
+        };
+
+        // User-selected waveforms for each oscillator
+        const selectedWaveforms = [
+            waveforms.sine,    // Oscillator 1
+            waveforms.square,  // Oscillator 2
+            waveforms.triangle, // Oscillator 3
+            waveforms.sawtooth // Oscillator 4
+        ];
+
+        const phases = [0, 0, 0, 0]; // Initial phases for each oscillator
+        const phaseDeltas = tone.phaseDeltas.slice(0, 4); // Phase deltas for each oscillator
+
+        for (let sampleIndex = bufferIndex; sampleIndex < bufferIndex + roundedSamplesPerTick; sampleIndex++) {
+            let sample = 0;
+
+            for (let osc = 0; osc < 4; osc++) {
+                const phase = phases[osc] % 1;
+                sample += selectedWaveforms[osc](phase);
+                phases[osc] += phaseDeltas[osc];
+            }
+
+            // Normalize the combined sample
+            sample /= 4;
+
+            data[sampleIndex] += sample * tone.expression;
+            tone.expression += tone.expressionDelta;
+        }
+
+        // Update phases back to the tone object
+        for (let osc = 0; osc < 4; osc++) {
+            tone.phases[osc] = phases[osc];
+        }
     }
     // advloop addition
     private static chipSynth(synth: Synth, bufferIndex: number, roundedSamplesPerTick: number, tone: Tone, instrumentState: InstrumentState): void {

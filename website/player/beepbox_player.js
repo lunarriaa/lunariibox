@@ -32,7 +32,7 @@ var beepbox = (function (exports) {
         });
     };
     var _a$1;
-    const TypePresets = ["chip", "FM", "noise", "spectrum", "drumset", "harmonics", "pulse width", "picked string", "supersaw", "chip (custom)", "mod", "FM (6-op)"];
+    const TypePresets = ["chip", "FM", "noise", "spectrum", "drumset", "harmonics", "pulse width", "picked string", "supersaw", "chip (custom)", "mod", "FM (6-op)", "analog",];
     class SampleLoadingState {
         constructor() {
             this.statusTable = {};
@@ -507,6 +507,7 @@ var beepbox = (function (exports) {
     Config.pwmBaseExpression = 0.04725;
     Config.supersawBaseExpression = 0.061425;
     Config.pickedStringBaseExpression = 0.025;
+    Config.analogBaseExpression = 0.05;
     Config.distortionBaseVolume = 0.011;
     Config.bitcrusherBaseVolume = 0.010;
     Config.granularOutputLoudnessCompensation = 0.5;
@@ -8350,6 +8351,7 @@ var beepbox = (function (exports) {
                 { name: TypePresets[8], customType: 8 },
                 { name: TypePresets[9], customType: 9 },
                 { name: TypePresets[11], customType: 11 },
+                { name: TypePresets[12], customType: 12 },
             ])
         },
         {
@@ -10508,6 +10510,7 @@ var beepbox = (function (exports) {
             this.chipWaveStartOffset = 0;
             this.chipNoise = 1;
             this.eqFilter = new FilterSettings();
+            this.stereoEnabled = true;
             this.eqFilterType = false;
             this.eqFilterSimpleCut = Config.filterSimpleCutRange - 1;
             this.eqFilterSimplePeak = 0;
@@ -10789,6 +10792,9 @@ var beepbox = (function (exports) {
                     this.supersawShape = 0;
                     this.pulseWidth = Config.pulseWidthRange - 1;
                     this.decimalOffset = 0;
+                    break;
+                case 12:
+                    this.chord = Config.chords.dictionary["simultaneous"].index;
                     break;
                 default:
                     throw new Error("Unrecognized instrument type: " + type);
@@ -11153,6 +11159,7 @@ var beepbox = (function (exports) {
                     instrumentObject["customChipWave"][i] = this.customChipWave[i];
                 }
             }
+            else if (this.type == 12) ;
             else if (this.type == 10) {
                 instrumentObject["modChannels"] = [];
                 instrumentObject["modInstruments"] = [];
@@ -11549,6 +11556,7 @@ var beepbox = (function (exports) {
                 if (this.chipWave == -1)
                     this.chipWave = 1;
             }
+            if (this.type == 12) ;
             if (this.type == 1 || this.type == 11) {
                 if (this.type == 1) {
                     this.algorithm = Config.algorithms.findIndex(algorithm => algorithm.name == instrumentObject["algorithm"]);
@@ -12666,6 +12674,9 @@ var beepbox = (function (exports) {
                         buffer.push(73, base64IntToCharCode[instrument.stringSustain | (instrument.stringSustainType << 5)]);
                     }
                     else if (instrument.type == 10) ;
+                    else if (instrument.type == 12) {
+                        buffer.push(75);
+                    }
                     else {
                         throw new Error("Unknown instrument type.");
                     }
@@ -13346,7 +13357,7 @@ var beepbox = (function (exports) {
                             }
                             validateRange(0, this.channels.length - 1, instrumentChannelIterator);
                             const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
-                            let instrumentType = validateRange(0, 12 - 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                            let instrumentType = validateRange(0, 13 - 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             if ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox)) {
                                 if (instrumentType == 7 || instrumentType == 8) {
                                     instrumentType += 2;
@@ -13685,6 +13696,8 @@ var beepbox = (function (exports) {
                                 instrument.decimalOffset = clamp(0, 99 + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             }
                         }
+                        break;
+                    case 75:
                         break;
                     case 73:
                         {
@@ -19868,6 +19881,9 @@ var beepbox = (function (exports) {
             else if (instrument.type == 5) {
                 baseExpression = Config.harmonicsBaseExpression;
             }
+            else if (instrument.type == 12) {
+                baseExpression = Config.analogBaseExpression;
+            }
             else if (instrument.type == 6) {
                 baseExpression = Config.pwmBaseExpression;
             }
@@ -20394,6 +20410,7 @@ var beepbox = (function (exports) {
                     tone.stringSustainEnd = useSustainEnd;
                     settingsExpressionMult *= Math.pow(2.0, 0.7 * (1.0 - useSustainStart / (Config.stringSustainRange - 1)));
                 }
+                if (instrument.type == 12) ;
                 const startFreq = Instrument.frequencyFromPitch(startPitch);
                 if (instrument.type == 0 || instrument.type == 9 || instrument.type == 5 || instrument.type == 7 || instrument.type == 3 || instrument.type == 6 || instrument.type == 2 || instrument.type == 4) {
                     const unisonVoices = instrument.unisonVoices;
@@ -20741,6 +20758,9 @@ var beepbox = (function (exports) {
                 }
                 return Synth.fm6SynthFunctionCache[fingerprint];
             }
+            else if (instrument.type == 12) {
+                return Synth.analogSynth;
+            }
             else {
                 throw new Error("Unrecognized instrument type: " + instrument.type);
             }
@@ -21047,6 +21067,37 @@ var beepbox = (function (exports) {
                 Synth.loopableChipFunctionCache[instrumentState.unisonVoices][chipWaveLoopMode] = chipFunction;
             }
             chipFunction(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState);
+        }
+        static analogSynth(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) {
+            const data = synth.tempMonoInstrumentSampleBuffer;
+            const waveforms = {
+                sine: (phase) => Math.sin(2 * Math.PI * phase),
+                square: (phase) => (phase < 0.5 ? 1 : -1),
+                triangle: (phase) => 4 * Math.abs(phase - 0.5) - 1,
+                sawtooth: (phase) => 2 * (phase - Math.floor(phase + 0.5)),
+            };
+            const selectedWaveforms = [
+                waveforms.sine,
+                waveforms.square,
+                waveforms.triangle,
+                waveforms.sawtooth
+            ];
+            const phases = [0, 0, 0, 0];
+            const phaseDeltas = tone.phaseDeltas.slice(0, 4);
+            for (let sampleIndex = bufferIndex; sampleIndex < bufferIndex + roundedSamplesPerTick; sampleIndex++) {
+                let sample = 0;
+                for (let osc = 0; osc < 4; osc++) {
+                    const phase = phases[osc] % 1;
+                    sample += selectedWaveforms[osc](phase);
+                    phases[osc] += phaseDeltas[osc];
+                }
+                sample /= 4;
+                data[sampleIndex] += sample * tone.expression;
+                tone.expression += tone.expressionDelta;
+            }
+            for (let osc = 0; osc < 4; osc++) {
+                tone.phases[osc] = phases[osc];
+            }
         }
         static chipSynth(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) {
             const voiceCount = Math.max(2, instrumentState.unisonVoices);

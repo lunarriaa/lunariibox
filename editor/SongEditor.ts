@@ -53,6 +53,8 @@ import { oscilloscopeCanvas } from "../global/Oscilloscope";
 import { VisualLoopControlsPrompt } from "./VisualLoopControlsPrompt";
 import { SampleLoadingStatusPrompt } from "./SampleLoadingStatusPrompt";
 import { AddSamplesPrompt } from "./AddSamplesPrompt";
+import { ChannelExportPrompt } from "./PresetExportPrompt";
+import { PresetImportPrompt } from "./PresetImportPrompt";
 import { ShortenerConfigPrompt } from "./ShortenerConfigPrompt";
 
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
@@ -93,6 +95,7 @@ function buildPresetOptions(isNoise: boolean, idSet: string): HTMLSelectElement 
         menu.appendChild(option({ value: InstrumentType.supersaw }, EditorConfig.valueToPreset(InstrumentType.supersaw)!.name));
         menu.appendChild(option({ value: InstrumentType.fm }, EditorConfig.valueToPreset(InstrumentType.fm)!.name));
         menu.appendChild(option({ value: InstrumentType.fm6op }, EditorConfig.instrumentToPreset(InstrumentType.fm6op)!.name));
+        menu.appendChild(option({ value: InstrumentType.analog }, EditorConfig.instrumentToPreset(InstrumentType.analog)!.name));
         menu.appendChild(option({ value: InstrumentType.harmonics }, EditorConfig.valueToPreset(InstrumentType.harmonics)!.name));
         menu.appendChild(option({ value: InstrumentType.pickedString }, EditorConfig.valueToPreset(InstrumentType.pickedString)!.name));
         menu.appendChild(option({ value: InstrumentType.spectrum }, EditorConfig.valueToPreset(InstrumentType.spectrum)!.name));
@@ -737,6 +740,14 @@ export class SongEditor {
     private readonly _piano: Piano = new Piano(this._doc);
     private readonly _octaveScrollBar: OctaveScrollBar = new OctaveScrollBar(this._doc, this._piano);
     private readonly _playButton: HTMLButtonElement = button({ class: "playButton", type: "button", title: "Play (Space)" }, span("Play"));
+    private readonly _currentTabButton: HTMLButtonElement = button({ class: "currentTabButton", style: "height: 10px;width: 43px;", type: "button", title: "Tab"}, span("${tabName}"));
+    private readonly _inactiveTabButton: HTMLButtonElement = button({ class: "inactiveTabButton", style: "height: 32px;width: 43px;", type: "button", title: "Tab"}, span("${tabName}"));
+    private readonly _newTab: HTMLButtonElement = button({ class: "newTab", style: "display: none;height: 6px;width: 6px;"});
+    private readonly _tabBarContainer: HTMLDivElement = div({ class: "tabBarContainer", style: "height: 10px;align-self: center;" },
+        this._currentTabButton,
+        this._inactiveTabButton,
+        this._newTab,
+    );
     private readonly _pauseButton: HTMLButtonElement = button({ class: "pauseButton", style: "display: none;", type: "button", title: "Pause (Space)" }, "Pause");
     private readonly _recordButton: HTMLButtonElement = button({ class: "recordButton", style: "display: none;", type: "button", title: "Record (Ctrl+Space)" }, span("Record"));
     private readonly _stopButton: HTMLButtonElement = button({ class: "stopButton", style: "display: none;", type: "button", title: "Stop Recording (Space)" }, "Stop Recording");
@@ -796,6 +807,8 @@ export class SongEditor {
         option({ value: "channelSettings" }, "Channel Settings... (Q)"),
         option({ value: "limiterSettings" }, "Limiter Settings... (⇧L)"),
         option({ value: "addExternal" }, "Add Custom Samples... (⇧Q)"),
+        option({ value: "presetExport"}, "Export Instruments as Preset..."),
+        option({ value: "presetImport"}, "Import Presets...")
     );
     private readonly _optionsMenu: HTMLSelectElement = select({ style: "width: 100%;" },
         option({ selected: true, disabled: true, hidden: false }, "Preferences"), // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
@@ -1167,6 +1180,8 @@ export class SongEditor {
     );
     */
     private readonly _addEnvelopeButton: HTMLButtonElement = button({ type: "button", class: "add-envelope" });
+
+
     private readonly _customInstrumentSettingsGroup: HTMLDivElement = div({ class: "editor-controls" },
         this._panSliderRow,
         this._panDropdownGroup,
@@ -1393,6 +1408,9 @@ export class SongEditor {
         ),
         div({ class: "play-pause-area" },
             this._volumeBarBox,
+            div({ class: "tab-bar-controls"},
+                this._tabBarContainer,
+            ),
             div({ class: "playback-bar-controls" },
                 this._playButton,
                 this._pauseButton,
@@ -2236,6 +2254,12 @@ export class SongEditor {
                     break;
                 case "addExternal":
                     this.prompt = new AddSamplesPrompt(this._doc);
+                    break;
+                case "exportPreset":
+                    this.prompt = new ChannelExportPrompt(this._doc);
+                    break;
+                case "importPreset":
+                    this.prompt = new PresetImportPrompt(this._doc);
                     break;
                 case "generateEuclideanRhythm":
                     this.prompt = new EuclideanRhythmPrompt(this._doc);
@@ -5479,6 +5503,12 @@ export class SongEditor {
                 break;
             case "addExternal":
                 this._openPrompt("addExternal");
+                break;
+            case  "importPreset":
+                this._openPrompt("importPreset");
+                break;
+            case "exportPreset":
+                this._openPrompt("exportPreset");
                 break;
         }
         this._editMenu.selectedIndex = 0;
