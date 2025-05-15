@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { Config } from "../synth/SynthConfig";
+import { Config, TabTypeIndex } from "../synth/SynthConfig";
 import { isMobile } from "./EditorConfig";
 import { Pattern, Channel, Song, Synth } from "../synth/synth";
 import { SongRecovery, generateUid, errorAlert } from "./SongRecovery";
@@ -12,6 +12,7 @@ import { Preferences } from "./Preferences";
 import { Change } from "./Change";
 import { ChangeNotifier } from "./ChangeNotifier";
 import { ChangeSong, setDefaultInstruments, discardInvalidPatternInstruments, ChangeHoldingModRecording } from "./changes";
+
 
 interface HistoryState {
     canUndo: boolean;
@@ -366,6 +367,33 @@ export class SongDocument {
         }
         this._stateShouldBePushed = false;
         this._recordedNewSong = false;
+    }
+
+    public tabTypes: TabTypeIndex[] = [TabTypeIndex.song, TabTypeIndex.instrument, TabTypeIndex.effects];
+
+    private _currentTab: TabTypeIndex = TabTypeIndex.song;
+
+    public get currentTab(): TabTypeIndex {
+        return this._currentTab;
+    }
+
+    public set currentTab(tab: TabTypeIndex) {
+        if (this.tabTypes.includes(tab) && this._currentTab !== tab) {
+            this._currentTab = tab;
+            this.notifier.changed(); // Notify watchers of the change
+        }
+    }
+
+    // Returns true if song settings should be visible
+    public get showSongSettings(): boolean {
+        // Show song settings only when on the Song tab
+        return this._currentTab === TabTypeIndex.song;
+    }
+
+    // Returns true if instrument settings should be visible
+    public get showInstrumentSettings(): boolean {
+        // Show instrument settings only when on the Instrument tab
+        return this._currentTab === TabTypeIndex.instrument;
     }
 
     public record(change: Change, replace: boolean = false, newSong: boolean = false): void {

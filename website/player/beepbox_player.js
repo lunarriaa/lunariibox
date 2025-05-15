@@ -16056,7 +16056,7 @@ var beepbox = (function (exports) {
     Song._latestUltraBoxVersion = 5;
     Song._oldestSlarmoosBoxVersion = 1;
     Song._latestSlarmoosBoxVersion = 5;
-    Song._variant = 0x73;
+    Song._variant = 0x6C;
     class PickedString {
         constructor() {
             this.delayLine = null;

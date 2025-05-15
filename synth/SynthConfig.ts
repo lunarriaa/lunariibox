@@ -121,6 +121,13 @@ export const enum EffectType {
     length,
 }
 
+export const enum TabTypeIndex {
+    song,
+    instrument,
+    effects,
+    length,
+}
+
 export const enum EnvelopeComputeIndex {
     noteVolume,
     noteFilterAllFreqs,

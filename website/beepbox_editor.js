@@ -32754,6 +32754,8 @@ li.select2-results__option[role=group] > strong:hover {
                 this._stateShouldBePushed = false;
                 this._recordedNewSong = false;
             };
+            this.tabTypes = [0, 1, 2];
+            this._currentTab = 0;
             this.notifier.watch(this._validateDocState);
             ColorConfig.setTheme(this.prefs.colorTheme);
             Layout.setLayout(this.prefs.layout);
@@ -32890,6 +32892,21 @@ li.select2-results__option[role=group] > strong:hover {
                     setTimeout(this._whenHistoryStateChanged);
                 }
             }
+        }
+        get currentTab() {
+            return this._currentTab;
+        }
+        set currentTab(tab) {
+            if (this.tabTypes.includes(tab) && this._currentTab !== tab) {
+                this._currentTab = tab;
+                this.notifier.changed();
+            }
+        }
+        get showSongSettings() {
+            return this._currentTab === 0;
+        }
+        get showInstrumentSettings() {
+            return this._currentTab === 1;
         }
         record(change, replace = false, newSong = false) {
             if (change.isNoop()) {
@@ -46720,10 +46737,6 @@ You should be redirected to the song at:<br /><br />
             this._piano = new Piano(this._doc);
             this._octaveScrollBar = new OctaveScrollBar(this._doc, this._piano);
             this._playButton = button({ class: "playButton", type: "button", title: "Play (Space)" }, span("Play"));
-            this._currentTabButton = button({ class: "currentTabButton", style: "height: 10px;width: 43px;", type: "button", title: "Tab" }, span("${tabName}"));
-            this._inactiveTabButton = button({ class: "inactiveTabButton", style: "height: 32px;width: 43px;", type: "button", title: "Tab" }, span("${tabName}"));
-            this._newTab = button({ class: "newTab", style: "display: none;height: 6px;width: 6px;" });
-            this._tabBarContainer = div({ class: "tabBarContainer", style: "height: 10px;align-self: center;" }, this._currentTabButton, this._inactiveTabButton, this._newTab);
             this._pauseButton = button({ class: "pauseButton", style: "display: none;", type: "button", title: "Pause (Space)" }, "Pause");
             this._recordButton = button({ class: "recordButton", style: "display: none;", type: "button", title: "Record (Ctrl+Space)" }, span("Record"));
             this._stopButton = button({ class: "stopButton", style: "display: none;", type: "button", title: "Stop Recording (Space)" }, "Stop Recording");
@@ -46836,6 +46849,10 @@ You should be redirected to the song at:<br /><br />
             this._eqFilterSimpleCutRow = div({ class: "selectRow", title: "Low-pass Filter Cutoff Frequency" }, span({ class: "tip", onclick: () => this._openPrompt("filterCutoff") }, "Filter Cut:"), this._eqFilterSimpleCutSlider.container);
             this._eqFilterSimplePeakSlider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.filterSimplePeakRange - 1, value: "6", step: "1" }), this._doc, (oldValue, newValue) => new ChangeEQFilterSimplePeak(this._doc, oldValue, newValue), false);
             this._eqFilterSimplePeakRow = div({ class: "selectRow", title: "Low-pass Filter Peak Resonance" }, span({ class: "tip", onclick: () => this._openPrompt("filterResonance") }, "Filter Peak:"), this._eqFilterSimplePeakSlider.container);
+            this._songTabButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(0) }, "song");
+            this._instrumentTabButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(1) }, "instrument");
+            this._effectsTabButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(2) }, "effects");
+            this._tabBar = div({ class: "tab-bar-container" }, div({ class: "tab-bar" }, this._songTabButton, this._instrumentTabButton, this._effectsTabButton));
             this._noteFilterSimpleButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._switchNoteFilterType(true) }, "simple");
             this._noteFilterAdvancedButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "last-button no-underline", onclick: () => this._switchNoteFilterType(false) }, "advanced");
             this._noteFilterTypeRow = div({ class: "selectRow", style: "padding-top: 4px; margin-bottom: 0px;" }, span({ style: "font-size: x-small;", class: "tip", onclick: () => this._openPrompt("filterType") }, "Note Filt.Type:"), div({ class: "instrument-bar" }, this._noteFilterSimpleButton, this._noteFilterAdvancedButton));
@@ -47010,7 +47027,7 @@ You should be redirected to the song at:<br /><br />
             this._sampleLoadingStatusContainer = div({ style: "cursor: pointer;" }, div({ style: `margin-top: 0.5em; text-align: center; color: ${ColorConfig.secondaryText};` }, "Sample Loading Status"), div({ class: "selectRow", style: "height: 6px; margin-bottom: 0.5em;" }, this._sampleLoadingBarContainer));
             this._songSettingsArea = div({ class: "song-settings-area" }, div({ class: "editor-controls" }, div({ class: "editor-song-settings" }, div({ style: "margin: 3px 0; position: relative; text-align: center; color: ${ColorConfig.secondaryText};" }, div({ class: "tip", style: "flex-shrink: 0; position:absolute; left: 0; top: 0; width: 12px; height: 12px", onclick: () => this._openPrompt("usedPattern") }, SVG.svg({ style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none;", width: "12px", height: "12px", "margin-right": "0.5em", viewBox: "-6 -6 12 12" }, this._usedPatternIndicator)), div({ class: "tip", style: "flex-shrink: 0; position: absolute; left: 14px; top: 0; width: 12px; height: 12px", onclick: () => this._openPrompt("usedInstrument") }, SVG.svg({ style: "flex-shrink: 0; position: absolute; left: 0; top: 0; pointer-events: none;", width: "12px", height: "12px", "margin-right": "1em", viewBox: "-6 -6 12 12" }, this._usedInstrumentIndicator)), "Song Settings", div({ style: "width: 100%; left: 0; top: -1px; position:absolute; overflow-x:clip;" }, this._jumpToModIndicator))), div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("scale") }, "Scale: "), div({ class: "selectContainer" }, this._scaleSelect)), div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("key") }, "Key: "), div({ class: "selectContainer" }, this._keySelect)), div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("key_octave") }, "Octave: "), this._octaveStepper), div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("tempo") }, "Tempo: "), span({ style: "display: flex;" }, this._tempoSlider.container, this._tempoStepper)), div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("rhythm") }, "Rhythm: "), div({ class: "selectContainer" }, this._rhythmSelect)), div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("songeq") }, span("Song EQ:")), this._songEqFilterZoom, this._songEqFilterEditor.container), this._sampleLoadingStatusContainer));
             this._instrumentSettingsArea = div({ class: "instrument-settings-area" }, this._instrumentSettingsGroup, this._modulatorGroup);
-            this._settingsArea = div({ class: "settings-area noSelection" }, div({ class: "version-area" }, div({ style: `text-align: center; margin: 3px 0; color: ${ColorConfig.secondaryText};` }, this._songTitleInputBox.input)), div({ class: "play-pause-area" }, this._volumeBarBox, div({ class: "tab-bar-controls" }, this._tabBarContainer), div({ class: "playback-bar-controls" }, this._playButton, this._pauseButton, this._recordButton, this._stopButton, this._prevBarButton, this._nextBarButton), div({ class: "playback-volume-controls" }, span({ class: "volume-speaker" }), this._volumeSlider.container), this._globalOscscopeContainer), this._menuArea, this._songSettingsArea, this._instrumentSettingsArea);
+            this._settingsArea = div({ class: "settings-area noSelection" }, div({ class: "version-area" }, div({ style: `text-align: center; margin: 3px 0; color: ${ColorConfig.secondaryText};` }, this._songTitleInputBox.input)), div({ class: "play-pause-area" }, this._tabBar, this._volumeBarBox, div({ class: "playback-bar-controls" }, this._playButton, this._pauseButton, this._recordButton, this._stopButton, this._prevBarButton, this._nextBarButton), div({ class: "playback-volume-controls" }, span({ class: "volume-speaker" }), this._volumeSlider.container), this._globalOscscopeContainer), this._menuArea, this._songSettingsArea, this._instrumentSettingsArea);
             this.mainLayer = div({ class: "beepboxEditor", tabIndex: "0" }, this._patternArea, this._trackArea, this._settingsArea, this._promptContainer);
             this._wasPlaying = false;
             this._currentPromptName = null;
@@ -50715,6 +50732,17 @@ You should be redirected to the song at:<br /><br />
             const instrument = channel.instruments[this._doc.getCurrentInstrument()];
             if (instrument.noteFilterType != toSimple) {
                 this._doc.record(new ChangeNoteFilterType(this._doc, instrument, toSimple));
+            }
+        }
+        _tabSwitch(tab) {
+            this._doc.currentTab = tab;
+            if (tab === 1) {
+                this._songSettingsArea.style.display = "none";
+                this._instrumentSettingsArea.style.display = "";
+            }
+            else if (tab === 0) {
+                this._songSettingsArea.style.display = "";
+                this._instrumentSettingsArea.style.display = "none";
             }
         }
         _randomPreset() {

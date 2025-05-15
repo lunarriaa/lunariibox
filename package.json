@@ -44,6 +44,7 @@
 	"dependencies": {
 		"@types/jquery": "^3.5.30",
 		"@types/select2": "^4.0.63",
+		"dockview-core": "^4.2.5",
 		"electron": "^29.1.1",
 		"electron-packager": "^17.1.2",
 		"express": "^4.21.2",

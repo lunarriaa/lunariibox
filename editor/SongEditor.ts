@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 //import {Layout} from "./Layout";
-import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeRingModulation, effectsIncludeGranular, DropdownID, calculateRingModHertz } from "../synth/SynthConfig";
+import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeRingModulation, effectsIncludeGranular, DropdownID, calculateRingModHertz, TabTypeIndex } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
 import { Change, ChangeGroup } from "./Change";
@@ -17,6 +17,9 @@ import { ExportPrompt } from "./ExportPrompt";
 import "./Layout"; // Imported here for the sake of ensuring this code is transpiled early.
 import { Instrument, Channel, Synth } from "../synth/synth";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
+//import "dockview-core/dist/styles/dockview.css"; // the tabbening begins
+///import { addDisposableListener } from "dockview-core/dist/esm/events.js";
+//import { createCloseButton } from "dockview-core/dist/esm/svg.js";
 import { Preferences } from "./Preferences";
 import { HarmonicsEditor, HarmonicsEditorPrompt } from "./HarmonicsEditor";
 import { InputBox, Slider } from "./HTMLWrapper";
@@ -57,7 +60,11 @@ import { ChannelExportPrompt } from "./PresetExportPrompt";
 import { PresetImportPrompt } from "./PresetImportPrompt";
 import { ShortenerConfigPrompt } from "./ShortenerConfigPrompt";
 
+
+
+
 const { button, div, input, select, span, optgroup, option, canvas } = HTML;
+
 
 function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
     for (let index: number = 0; index < items.length; index++) {
@@ -179,6 +186,7 @@ function setSelectedValue(menu: HTMLSelectElement, value: number, isSelect2: boo
         }
     }
 }
+
 
 class CustomChipCanvas {
     private mouseDown: boolean;
@@ -730,6 +738,7 @@ class CustomAlgorythmCanvas {
 export class SongEditor {
     public prompt: Prompt | null = null;
 
+    
     private readonly _keyboardLayout: KeyboardLayout = new KeyboardLayout(this._doc);
     private readonly _patternEditorPrev: PatternEditor = new PatternEditor(this._doc, false, -1);
     private readonly _patternEditor: PatternEditor = new PatternEditor(this._doc, true, 0);
@@ -740,14 +749,6 @@ export class SongEditor {
     private readonly _piano: Piano = new Piano(this._doc);
     private readonly _octaveScrollBar: OctaveScrollBar = new OctaveScrollBar(this._doc, this._piano);
     private readonly _playButton: HTMLButtonElement = button({ class: "playButton", type: "button", title: "Play (Space)" }, span("Play"));
-    private readonly _currentTabButton: HTMLButtonElement = button({ class: "currentTabButton", style: "height: 10px;width: 43px;", type: "button", title: "Tab"}, span("${tabName}"));
-    private readonly _inactiveTabButton: HTMLButtonElement = button({ class: "inactiveTabButton", style: "height: 32px;width: 43px;", type: "button", title: "Tab"}, span("${tabName}"));
-    private readonly _newTab: HTMLButtonElement = button({ class: "newTab", style: "display: none;height: 6px;width: 6px;"});
-    private readonly _tabBarContainer: HTMLDivElement = div({ class: "tabBarContainer", style: "height: 10px;align-self: center;" },
-        this._currentTabButton,
-        this._inactiveTabButton,
-        this._newTab,
-    );
     private readonly _pauseButton: HTMLButtonElement = button({ class: "pauseButton", style: "display: none;", type: "button", title: "Pause (Space)" }, "Pause");
     private readonly _recordButton: HTMLButtonElement = button({ class: "recordButton", style: "display: none;", type: "button", title: "Record (Ctrl+Space)" }, span("Record"));
     private readonly _stopButton: HTMLButtonElement = button({ class: "stopButton", style: "display: none;", type: "button", title: "Stop Recording (Space)" }, "Stop Recording");
@@ -966,6 +967,10 @@ export class SongEditor {
     private readonly _eqFilterSimplePeakSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.filterSimplePeakRange - 1, value: "6", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeEQFilterSimplePeak(this._doc, oldValue, newValue), false);
     private _eqFilterSimplePeakRow: HTMLDivElement = div({ class: "selectRow", title: "Low-pass Filter Peak Resonance" }, span({ class: "tip", onclick: () => this._openPrompt("filterResonance") }, "Filter Peak:"), this._eqFilterSimplePeakSlider.container);
 
+    private readonly _songTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(TabTypeIndex.song) }, "song");
+    private readonly _instrumentTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(TabTypeIndex.instrument) }, "instrument");
+    private readonly _effectsTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(TabTypeIndex.effects) }, "effects");
+    private readonly _tabBar: HTMLDivElement = div({ class: "tab-bar-container"}, div({ class: "tab-bar" }, this._songTabButton, this._instrumentTabButton, this._effectsTabButton));
     private readonly _noteFilterSimpleButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._switchNoteFilterType(true) }, "simple");
     private readonly _noteFilterAdvancedButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "last-button no-underline", onclick: () => this._switchNoteFilterType(false) }, "advanced");
     private readonly _noteFilterTypeRow: HTMLElement = div({ class: "selectRow", style: "padding-top: 4px; margin-bottom: 0px;" }, span({ style: "font-size: x-small;", class: "tip", onclick: () => this._openPrompt("filterType") }, "Note Filt.Type:"), div({ class: "instrument-bar" }, this._noteFilterSimpleButton, this._noteFilterAdvancedButton));
@@ -1407,10 +1412,8 @@ export class SongEditor {
             ),
         ),
         div({ class: "play-pause-area" },
+            this._tabBar,
             this._volumeBarBox,
-            div({ class: "tab-bar-controls"},
-                this._tabBarContainer,
-            ),
             div({ class: "playback-bar-controls" },
                 this._playButton,
                 this._pauseButton,
@@ -1429,6 +1432,7 @@ export class SongEditor {
         this._songSettingsArea,
         this._instrumentSettingsArea,
     );
+
 
     public readonly mainLayer: HTMLDivElement = div({ class: "beepboxEditor", tabIndex: "0" },
         this._patternArea,
@@ -1479,8 +1483,8 @@ export class SongEditor {
     public patternUsed: boolean = false;
     private _modRecTimeout: number = -1;
 
+    
     constructor(private _doc: SongDocument) {
-
         this._doc.notifier.watch(this.whenUpdated);
         this._doc.modRecordingHandler = () => { this.handleModRecording() };
         new MidiInputHandler(this._doc);
@@ -5067,6 +5071,17 @@ export class SongEditor {
         const instrument: Instrument = channel.instruments[this._doc.getCurrentInstrument()];
         if (instrument.noteFilterType != toSimple) {
             this._doc.record(new ChangeNoteFilterType(this._doc, instrument, toSimple));
+        }
+    }
+
+    public _tabSwitch(tab: TabTypeIndex): void {
+        this._doc.currentTab = tab;
+        if (tab === TabTypeIndex.instrument) {
+            this._songSettingsArea.style.display = "none";
+            this._instrumentSettingsArea.style.display = "";
+        } else if (tab === TabTypeIndex.song) {
+            this._songSettingsArea.style.display = "";
+            this._instrumentSettingsArea.style.display = "none";
         }
     }
 
