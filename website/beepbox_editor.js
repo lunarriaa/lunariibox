@@ -46852,7 +46852,7 @@ You should be redirected to the song at:<br /><br />
             this._songTabButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(0) }, "song");
             this._instrumentTabButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(1) }, "instrument");
             this._effectsTabButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(2) }, "effects");
-            this._tabBar = div({ class: "tab-bar-container" }, div({ class: "tab-bar" }, this._songTabButton, this._instrumentTabButton, this._effectsTabButton));
+            this._tabBar = div({ class: "tab-bar-container" }, div({ class: "instrument-bar" }, this._songTabButton, this._instrumentTabButton, this._effectsTabButton));
             this._noteFilterSimpleButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._switchNoteFilterType(true) }, "simple");
             this._noteFilterAdvancedButton = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "last-button no-underline", onclick: () => this._switchNoteFilterType(false) }, "advanced");
             this._noteFilterTypeRow = div({ class: "selectRow", style: "padding-top: 4px; margin-bottom: 0px;" }, span({ style: "font-size: x-small;", class: "tip", onclick: () => this._openPrompt("filterType") }, "Note Filt.Type:"), div({ class: "instrument-bar" }, this._noteFilterSimpleButton, this._noteFilterAdvancedButton));
