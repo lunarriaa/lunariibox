@@ -1,9 +1,10 @@
 {
-	"name": "slarmoosbox",
-	"version": "1.4.3",
-	"description": "Slarmoo's Box is a mod of Ultrabox that aims to advance Beepbox's capabilities.",
-	"author": "Slarmoo",
+	"name": "lunariisbox",
+	"version": "1.0.2",
+	"description": "Lunarii's Box is a mod of Slarmoo's Box that aims to advance Beepbox's capabilities.",
+	"author": "Lunarriaa",
 	"contributors": [
+		"Lunarrriaa",
 		"Slarmoo",
 		"Main",
 		"Neputendo",
@@ -12,7 +13,7 @@
 		"Choptop84"
 	],
 	"license": "MIT",
-	"homepage": "https://slarmoo.github.io/slarmoosbox/website/",
+	"homepage": "https://lunarriaa.github.io/lunariibox/website/",
 	"type": "module",
 	"main": "main.js",
 	"icon": "path.join(__dirname, 'icon.ico')",
@@ -26,11 +27,11 @@
 		"deploy-files": "bash ./deploy_files.sh",
 		"start": "electron ./to_deploy",
 		"package": "electron-packager ./to_deploy --platform=darwin,linux,win32 --arch=ia32,x64 --asar --overwrite && npm run build-offline-html",
-		"package-host": "electron-packager ./to_deploy slarmoosbox --asar --overwrite && npm run build-offline-html"
+		"package-host": "electron-packager ./to_deploy lunariibox --asar --overwrite && npm run build-offline-html"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/slarmoo/slarmoosbox.git"
+		"url": "git+https://github.com/lunarriaa/lunariibox.git"
 	},
 	"devDependencies": {
 		"@electron/packager": "^18.3.5",

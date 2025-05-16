@@ -1,12 +1,12 @@
 {
-	"name": "Slarmoo's Box",
-	"short_name": "Slarmoo's Box",
-	"description": "Slarmoo's Box is a mod of Ultrabox that aims to advance Beepbox's capabilities.",
+	"name": "Lunarii's Box",
+	"short_name": "Lunarii's Box",
+	"description": "Lunarii's Box is a mod of Slarmoo's Box that aims to advance Beepbox's capabilities.",
 	"scope": "/",
 	"start_url": ".",
 	"display": "browser",
 	"orientation": "portrait-primary",
-	"theme_color": "#247d1d",
+	"theme_color": "#9709ad",
 	"background_color": "#000",
 	"categories": ["music"],
 	"icons": [
