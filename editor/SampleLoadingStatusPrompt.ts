@@ -18,7 +18,7 @@ export class SampleLoadingStatusPrompt {
     public container: HTMLDivElement = div({ class: "prompt noSelection", style: "width: 350px;" },
         div(
             h2("Sample Loading Status"),
-            div({ style: "display: flex; flex-direction: column; align-items: center; margin-bottom: 0.5em;" },
+            div({ style: "display: flex; border-radius: 5px; flex-direction: column; align-items: center; margin-bottom: 0.5em;" },
                 this._noSamplesMessage,
                 div({ style: "width: 100%; max-height: 350px; overflow-y: scroll;" }, this._statusesContainer),
             )

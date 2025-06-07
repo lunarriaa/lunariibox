@@ -12,8 +12,9 @@ import { ChangePreset } from "./changes";
 
 
 //namespace beepbox {
-const doc: SongDocument = new SongDocument();//debug only
-const editor: SongEditor = new SongEditor(doc);//same as above
+// const doc: SongDocument = new SongDocument();//debug only
+// const editor: SongEditor = new SongEditor(doc);//same as above
+const editor: SongEditor = new SongEditor();
 
 const beepboxEditorContainer: HTMLElement = document.getElementById("beepboxEditorContainer")!;
 beepboxEditorContainer.appendChild(editor.mainLayer);
@@ -49,10 +50,10 @@ $("#pitchPresetSelect").on('select2:open', function () {
 
         $.each(groups, (index, v) => {
             $(v).siblings().hide();
-            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(doc.song, doc.channel).primaryNote + ";");
+            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor._doc.song, editor._doc.channel).primaryNote + ";");
         })
         $.each(options, (index, v) => {
-            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(doc.song, doc.channel).primaryNote + ";");
+            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor._doc.song, editor._doc.channel).primaryNote + ";");
         })
 
         $('.select2-dropdown--below').css('opacity', 1);
@@ -70,10 +71,10 @@ $("#drumPresetSelect").on('select2:open', function () {
 
         $.each(groups, (index, v) => {
             $(v).siblings().hide();
-            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(doc.song, doc.channel).primaryNote + ";");
+            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor._doc.song, editor._doc.channel).primaryNote + ";");
         })
         $.each(options, (index, v) => {
-            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(doc.song, doc.channel).primaryNote + ";");
+            $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor._doc.song, editor._doc.channel).primaryNote + ";");
         })
 
         $('.select2-dropdown--below').css('opacity', 1);
@@ -91,10 +92,10 @@ $("#drumPresetSelect").on('select2:open', function () {
 
 //         $.each(groups, (index, v) => {
 //             $(v).siblings().hide();
-//             $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(doc.song, doc.channel).primaryNote + ";");
+//             $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor._doc.song, editor._doc.channel).primaryNote + ";");
 //         })
 //         $.each(options, (index, v) => {
-//             $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(doc.song, doc.channel).primaryNote + ";");
+//             $(v)[0].setAttribute("style", "color: " + ColorConfig.getChannelColor(editor._doc.song, editor._doc.channel).primaryNote + ";");
 //         })
 
 //         $('.select2-dropdown--below').css('opacity', 1);
@@ -121,10 +122,10 @@ $('#drumPresetSelect').on("select2:close", editor._refocus);
 editor.mainLayer.focus();
 
 // don't autoplay on mobile devices, wait for input.
-if (!isMobile && doc.prefs.autoPlay) {
+if (!isMobile && editor._doc.prefs.autoPlay) {
     function autoplay(): void {
         if (!document.hidden) {
-            doc.synth.play();
+            editor._doc.synth.play();
             editor.updatePlayButton();
             window.removeEventListener("visibilitychange", autoplay);
         }

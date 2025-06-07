@@ -343,7 +343,7 @@ export class TipPrompt implements Prompt {
 					p("The intervals created by this setting are in \"just intonation\" which means they stay in phase with the original pitch instead of shifting in and out of phase over time. If you want the shifting, add the detune effect!"),
 				);
 			} break;
-			case "detune": {
+			case "detune2": {
 				message = div(
 					h2("Detune"),
 					p("This setting slightly adjusts the frequency of notes played by the instrument. You can use a little bit to add a pleasing shifting sound similar to the \"unison\" feature when combined with other instruments. If you use too much, then the instrument may sound unpleasantly out-of-tune."),

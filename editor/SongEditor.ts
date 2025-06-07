@@ -3,6 +3,7 @@
 //import {Layout} from "./Layout";
 import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeRingModulation, effectsIncludeGranular, DropdownID, calculateRingModHertz, TabTypeIndex } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
+//import { CustomFadePrompt } from "./CustomFadePrompt";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
 import { Change, ChangeGroup } from "./Change";
 import { ChannelSettingsPrompt } from "./ChannelSettingsPrompt";
@@ -63,7 +64,7 @@ import { ShortenerConfigPrompt } from "./ShortenerConfigPrompt";
 
 
 
-const { button, div, input, select, span, optgroup, option, canvas } = HTML;
+const { button, div, input, select, span, optgroup, option, canvas, label } = HTML;
 
 
 function buildOptions(menu: HTMLSelectElement, items: ReadonlyArray<string | number>): HTMLSelectElement {
@@ -738,8 +739,12 @@ class CustomAlgorythmCanvas {
 export class SongEditor {
     public prompt: Prompt | null = null;
 
-    
+    public _doc: SongDocument = new SongDocument();
     private readonly _keyboardLayout: KeyboardLayout = new KeyboardLayout(this._doc);
+
+    //private _openCustomFadePrompt(): void {
+    //    this._doc.prompt = new CustomFadePrompt(this._doc);
+    //}
     private readonly _patternEditorPrev: PatternEditor = new PatternEditor(this._doc, false, -1);
     private readonly _patternEditor: PatternEditor = new PatternEditor(this._doc, true, 0);
     private readonly _patternEditorNext: PatternEditor = new PatternEditor(this._doc, false, 1);
@@ -748,8 +753,8 @@ export class SongEditor {
     private readonly _loopEditor: LoopEditor = new LoopEditor(this._doc, this._trackEditor);
     private readonly _piano: Piano = new Piano(this._doc);
     private readonly _octaveScrollBar: OctaveScrollBar = new OctaveScrollBar(this._doc, this._piano);
-    private readonly _playButton: HTMLButtonElement = button({ class: "playButton", type: "button", title: "Play (Space)" }, span("Play"));
-    private readonly _pauseButton: HTMLButtonElement = button({ class: "pauseButton", style: "display: none;", type: "button", title: "Pause (Space)" }, "Pause");
+    private readonly _playButton: HTMLButtonElement = button({ class: "playButton", type: "button", title: "Play (Space)" }, );
+    private readonly _pauseButton: HTMLButtonElement = button({ class: "pauseButton", style: "display: none;", type: "button", title: "Pause (Space)" }, );
     private readonly _recordButton: HTMLButtonElement = button({ class: "recordButton", style: "display: none;", type: "button", title: "Record (Ctrl+Space)" }, span("Record"));
     private readonly _stopButton: HTMLButtonElement = button({ class: "stopButton", style: "display: none;", type: "button", title: "Stop Recording (Space)" }, "Stop Recording");
     private readonly _prevBarButton: HTMLButtonElement = button({ class: "prevBarButton", type: "button", title: "Previous Bar (left bracket)" });
@@ -772,8 +777,8 @@ export class SongEditor {
     private readonly _volumeBarBox: HTMLDivElement = div({ class: "playback-volume-bar", style: "height: 12px; align-self: center;" },
         this._volumeBarContainer,
     );
-    private readonly _fileMenu: HTMLSelectElement = select({ style: "width: 100%;" },
-        option({ selected: true, disabled: true, hidden: false }, "File"), // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
+    private readonly _fileMenu: HTMLSelectElement = select({ style: "width: 50px;" },
+        option({ selected: true, disabled: true, hidden: false }, ), // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
         option({ value: "new" }, "+ New Blank Song (⇧`)"),
         option({ value: "import" }, "↑ Import Song... (" + EditorConfig.ctrlSymbol + "O)"),
         option({ value: "export" }, "↓ Export Song... (" + EditorConfig.ctrlSymbol + "S)"),
@@ -785,8 +790,8 @@ export class SongEditor {
         option({ value: "copyEmbed" }, "⎘ Copy HTML Embed Code"),
         option({ value: "songRecovery" }, "⚠ Recover Recent Song... (`)"),
     );
-    private readonly _editMenu: HTMLSelectElement = select({ style: "width: 100%;" },
-        option({ selected: true, disabled: true, hidden: false }, "Edit"), // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
+    private readonly _editMenu: HTMLSelectElement = select({ style: "width: 50px;" },
+        option({ selected: true, disabled: true, hidden: false }, ), // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
         option({ value: "undo" }, "Undo (Z)"),
         option({ value: "redo" }, "Redo (Y)"),
         option({ value: "copy" }, "Copy Pattern (C)"),
@@ -797,6 +802,7 @@ export class SongEditor {
         option({ value: "insertChannel" }, "Insert Channel (" + EditorConfig.ctrlSymbol + "⏎)"),
         option({ value: "deleteChannel" }, "Delete Selected Channels (" + EditorConfig.ctrlSymbol + "⌫)"),
         option({ value: "selectChannel" }, "Select Channel (⇧A)"),
+        option({ value: "groupChannels"}, "Group Selected Channels (⇧G)"),
         option({ value: "selectAll" }, "Select All (A)"),
         option({ value: "duplicatePatterns" }, "Duplicate Reused Patterns (D)"),
         option({ value: "transposeUp" }, "Move Notes Up (+ or ⇧+)"),
@@ -811,8 +817,8 @@ export class SongEditor {
         option({ value: "presetExport"}, "Export Instruments as Preset..."),
         option({ value: "presetImport"}, "Import Presets...")
     );
-    private readonly _optionsMenu: HTMLSelectElement = select({ style: "width: 100%;" },
-        option({ selected: true, disabled: true, hidden: false }, "Preferences"), // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
+    private readonly _optionsMenu: HTMLSelectElement = select({ style: "width: 50px;" },
+        option({ selected: true, disabled: true, hidden: false }, ), // todo: "hidden" should be true but looks wrong on mac chrome, adds checkmark next to first visible option even though it's not selected. :(
         optgroup({ label: "Technical" },
             option({ value: "autoPlay" }, "Auto Play on Load"),
             option({ value: "autoFollow" }, "Auto Follow Playhead"),
@@ -848,8 +854,11 @@ export class SongEditor {
     private readonly _scaleSelect: HTMLSelectElement = buildOptions(select(), Config.scales.map(scale => scale.name));
     private readonly _keySelect: HTMLSelectElement = buildOptions(select(), Config.keys.map(key => key.name).reverse());
     private readonly _octaveStepper: HTMLInputElement = input({ style: "width: 59.5%;", type: "number", min: Config.octaveMin, max: Config.octaveMax, value: "0" });
-    private readonly _tempoSlider: Slider = new Slider(input({ style: "margin: 0; vertical-align: middle;", type: "range", min: "1", max: "500", value: "160", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeTempo(this._doc, oldValue, newValue), false);
-    private readonly _tempoStepper: HTMLInputElement = input({ style: "width: 4em; font-size: 80%; margin-left: 0.4em; vertical-align: middle;", type: "number", step: "1" });
+    private readonly _tempoSlider: Slider = new Slider(input({ style: "margin: 0; vertical-align: middle;", type: "range", min: "1", max: "500", value: "160", step: "1" }), this._doc, (oldValue: number, newValue: number) => {
+        // Return a Change object to update the value and notify
+        return new ChangeTempo(this._doc, oldValue, newValue);
+    }, false);
+    private readonly _tempoStepper: HTMLInputElement = input({ style: "width: 59.5%; margin-left: 0.4em; vertical-align: middle;", type: "number", step: "1" });
     private readonly _songEqFilterEditor: FilterEditor = new FilterEditor(this._doc, false, false, true);
     private readonly _songEqFilterZoom: HTMLButtonElement = button({ style: "margin-left:0em; padding-left:0.2em; height:1.5em; max-width: 12px;", onclick: () => this._openPrompt("customSongEQFilterSettings") }, "+");
     private readonly _chorusSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.chorusRange - 1, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeChorus(this._doc, oldValue, newValue), false);
@@ -885,7 +894,7 @@ export class SongEditor {
     private readonly _grainRangeSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.grainRangeMax / Config.grainSizeStep, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeGrainRange(this._doc, oldValue, newValue), false);
     public readonly grainRangeNum: HTMLParagraphElement = div({ style: "font-size: 80%; ", id: "grainRangeNum" });
     private readonly _grainRangeSliderRow: HTMLDivElement = div({ class: "selectRow", style: "width:100%;" }, div({ style: "display:flex; flex-direction:column; align-items:center;" },
-        span({ class: "tip", style: "font-size: smaller;", onclick: () => this._openPrompt("grainRange") }, "Range: "),
+        span({ class: "tip", style: "margin-top: -45px; font-size: x-small;", onclick: () => this._openPrompt("grainRange") }, "Range: "),
         div({ style: `color: ${ColorConfig.secondaryText}; ` }, this.grainRangeNum),
     ), this._grainRangeSlider.container);
     private readonly _granularContainerRow: HTMLDivElement = div({ class: "", style: "display:flex; flex-direction:column;" },
@@ -967,10 +976,10 @@ export class SongEditor {
     private readonly _eqFilterSimplePeakSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.filterSimplePeakRange - 1, value: "6", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeEQFilterSimplePeak(this._doc, oldValue, newValue), false);
     private _eqFilterSimplePeakRow: HTMLDivElement = div({ class: "selectRow", title: "Low-pass Filter Peak Resonance" }, span({ class: "tip", onclick: () => this._openPrompt("filterResonance") }, "Filter Peak:"), this._eqFilterSimplePeakSlider.container);
 
-    private readonly _songTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(TabTypeIndex.song) }, "song");
-    private readonly _instrumentTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(TabTypeIndex.instrument) }, "instrument");
-    private readonly _effectsTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._tabSwitch(TabTypeIndex.effects) }, "effects");
-    private readonly _tabBar: HTMLDivElement = div({ class: "tab-bar-container"}, div({ class: "instrument-bar" }, this._songTabButton, this._instrumentTabButton, this._effectsTabButton));
+    private readonly _songTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "tab-bar-button", onclick: () => this._tabSwitch(TabTypeIndex.song) }, "Song");
+    private readonly _instrumentTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "tab-bar-button", onclick: () => this._tabSwitch(TabTypeIndex.instrument) }, "Instrument");
+    private readonly _effectsTabButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "tab-bar-button", onclick: () => this._tabSwitch(TabTypeIndex.effects) }, "FX & Env");
+    private readonly _tabBar: HTMLDivElement = div({ class: "tab-bar-container"}, div({ class: "tab-bar" }, this._songTabButton, this._instrumentTabButton, this._effectsTabButton));
     private readonly _noteFilterSimpleButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._switchNoteFilterType(true) }, "simple");
     private readonly _noteFilterAdvancedButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "last-button no-underline", onclick: () => this._switchNoteFilterType(false) }, "advanced");
     private readonly _noteFilterTypeRow: HTMLElement = div({ class: "selectRow", style: "padding-top: 4px; margin-bottom: 0px;" }, span({ style: "font-size: x-small;", class: "tip", onclick: () => this._openPrompt("filterType") }, "Note Filt.Type:"), div({ class: "instrument-bar" }, this._noteFilterSimpleButton, this._noteFilterAdvancedButton));
@@ -1013,11 +1022,11 @@ export class SongEditor {
         div({ style: `color: ${ColorConfig.secondaryText}; margin-top: -3px;` }, this._detuneSliderInputBox),
     ), this._detuneSlider.container);
     private readonly _distortionSlider: Slider = new Slider(input({ style: "margin: 0; position: sticky;", type: "range", min: "0", max: Config.distortionRange - 1, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeDistortion(this._doc, oldValue, newValue), false);
-    private readonly _distortionRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("distortion") }, "Distortion:"), this._distortionSlider.container);
+    private readonly _distortionRow: HTMLDivElement = div({ class: "selectRow" }, label({ class: "tip", onclick: () => this._openPrompt("distortion") }, "Distortion:"), this._distortionSlider.container);
     private readonly _aliasingBox: HTMLInputElement = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-right: 4em;" });
-    private readonly _aliasingRow: HTMLElement = div({ class: "selectRow" }, span({ class: "tip", style: "margin-left:10px;", onclick: () => this._openPrompt("aliases") }, "Aliasing:"), this._aliasingBox);
+    private readonly _aliasingRow: HTMLElement = div({ class: "selectRow" }, label({ class: "tip", style: "margin-left:10px;", onclick: () => this._openPrompt("aliases") }, "Aliasing:"), this._aliasingBox);
     private readonly _bitcrusherQuantizationSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.bitcrusherQuantizationRange - 1, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeBitcrusherQuantization(this._doc, oldValue, newValue), false);
-    private readonly _bitcrusherQuantizationRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("bitcrusherQuantization") }, "Bit Crush:"), this._bitcrusherQuantizationSlider.container);
+    private readonly _bitcrusherQuantizationRow: HTMLDivElement = div({ class: "selectRow" }, label({ class: "tip", onclick: () => this._openPrompt("bitcrusherQuantization") }, "Bit Crush:"), this._bitcrusherQuantizationSlider.container);
     private readonly _bitcrusherFreqSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.bitcrusherFreqRange - 1, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeBitcrusherFreq(this._doc, oldValue, newValue), false);
     private readonly _bitcrusherFreqRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("bitcrusherFreq") }, "Freq Crush:"), this._bitcrusherFreqSlider.container);
     private readonly _stringSustainSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.stringSustainRange - 1, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeStringSustain(this._doc, oldValue, newValue), false);
@@ -1064,7 +1073,15 @@ export class SongEditor {
 
     private readonly _chordSelectRow: HTMLElement = div({ class: "selectRow", style: "display: flex; flex-direction: row" }, span({ class: "tip", onclick: () => this._openPrompt("chords") }, "Chords:"), this._monophonicNoteInputBox, this._chordDropdown, this._chordSelectContainer);
     private readonly _arpeggioSpeedDisplay: HTMLSpanElement = span({ style: `color: ${ColorConfig.secondaryText}; font-size: smaller; text-overflow: clip;` }, "x1");
-    private readonly _arpeggioSpeedSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["arp speed"].maxRawVol, value: "0", step: "1" }), this._doc, (oldValue: number, newValue: number) => new ChangeArpeggioSpeed(this._doc, oldValue, newValue), false);
+    private readonly _arpeggioSpeedSlider: Slider = new Slider(
+        input({ style: "margin: 0;", type: "range", min: "0", max: Config.modulators.dictionary["arp speed"].maxRawVol, value: "0", step: "1" }),
+        this._doc,
+        (_oldValue: number, newValue: number): Change => {
+            // Return a Change object as required by the signature.
+            return new ChangeArpeggioSpeed(this._doc, _oldValue, newValue);
+        },
+        false
+    );
     private readonly _arpeggioSpeedRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("arpeggioSpeed") }, "‣ Spd:"), this._arpeggioSpeedDisplay, this._arpeggioSpeedSlider.container);
     private readonly _twoNoteArpBox: HTMLInputElement = input({ type: "checkbox", style: "width: 1em; padding: 0; margin-right: 4em;" });
     private readonly _twoNoteArpRow: HTMLElement = div({ class: "selectRow dropFader" }, span({ class: "tip", style: "margin-left:4px;", onclick: () => this._openPrompt("twoNoteArpeggio") }, "‣ Fast Two-Note:"), this._twoNoteArpBox);
@@ -1332,7 +1349,7 @@ export class SongEditor {
         this._barScrollBar.container,
     );
 
-    private readonly _menuArea: HTMLDivElement = div({ class: "menu-area" },
+    private readonly _menuArea: HTMLDivElement = div({ class: "menu-area", style: `align-items: center;`},
         div({ class: "selectContainer menu file" },
             this._fileMenu,
         ),
@@ -1373,15 +1390,11 @@ export class SongEditor {
             ),
             div({ class: "selectRow" },
                 span({ class: "tip", onclick: () => this._openPrompt("scale") }, "Scale: "),
-                div({ class: "selectContainer" }, this._scaleSelect),
+               div({class: "selectContainer"}, this._scaleSelect),
             ),
             div({ class: "selectRow" },
                 span({ class: "tip", onclick: () => this._openPrompt("key") }, "Key: "),
-                div({ class: "selectContainer" }, this._keySelect),
-            ),
-            div({ class: "selectRow" },
-                span({ class: "tip", onclick: () => this._openPrompt("key_octave") }, "Octave: "),
-                this._octaveStepper,
+                span({ class: "selectContainer",  style: "display: flex; gap: 5%" },  this._octaveStepper, this._keySelect),
             ),
             div({ class: "selectRow" },
                 span({ class: "tip", onclick: () => this._openPrompt("tempo") }, "Tempo: "),
@@ -1461,6 +1474,7 @@ export class SongEditor {
     private readonly _operatorWaveformPulsewidthSliders: Slider[] = [];
     private readonly _operatorDropdownRows: HTMLElement[] = []
     private readonly _operatorDropdownGroups: HTMLDivElement[] = [];
+    private readonly _amAmplitudeSliders: Slider[] = [];
     readonly _drumsetSpectrumEditors: SpectrumEditor[] = [];
     private readonly _drumsetEnvelopeSelects: HTMLSelectElement[] = [];
     private _showModSliders: boolean[][] = [];
@@ -1484,7 +1498,9 @@ export class SongEditor {
     private _modRecTimeout: number = -1;
 
     
-    constructor(private _doc: SongDocument) {
+    constructor() {
+        this._doc.currentTab = TabTypeIndex.song; 
+        this._tabSwitch(TabTypeIndex.song);
         this._doc.notifier.watch(this.whenUpdated);
         this._doc.modRecordingHandler = () => { this.handleModRecording() };
         new MidiInputHandler(this._doc);
@@ -1838,7 +1854,7 @@ export class SongEditor {
         this._customAlgorithmCanvas.redrawCanvas();
     }
 
-    private _toggleDropdownMenu(dropdown: DropdownID, submenu: number = 0, subtype: string | null = null): void {
+    private _toggleDropdownMenu(dropdown: DropdownID, submenu: number = 0, _subtype: string | null = null): void {
         let target: HTMLButtonElement = this._vibratoDropdown;
         let group: HTMLElement = this._vibratoDropdownGroup;
         switch (dropdown) {
@@ -2143,6 +2159,14 @@ export class SongEditor {
                 return this._operatorAmplitudeSliders[4];
             case Config.modulators.dictionary["fm slider 6"].index:
                 return this._operatorAmplitudeSliders[5];
+            case Config.modulators.dictionary["am slider 1"].index:
+                return this._amAmplitudeSliders[0];
+            case Config.modulators.dictionary["am slider 2"].index:
+                return this._amAmplitudeSliders[1];
+            case Config.modulators.dictionary["am slider 3"].index:
+                return this._amAmplitudeSliders[2];
+            case Config.modulators.dictionary["am slider 4"].index:
+                return this._amAmplitudeSliders[3];
             case Config.modulators.dictionary["envelope speed"].index:
                 return this._envelopeSpeedSlider;
             case Config.modulators.dictionary["dynamism"].index:
@@ -2321,6 +2345,8 @@ export class SongEditor {
     public refocusStage = (): void => {
         this.mainLayer.focus({ preventScroll: true });
     }
+
+ 
 
     private _onFocusIn = (event: Event): void => {
         if (this._doc.synth.recording && event.target != this.mainLayer && event.target != this._stopButton && event.target != this._volumeSlider.input) {
@@ -2743,6 +2769,8 @@ export class SongEditor {
                 // this._decimalOffsetRow.style.display = "none";
                 this._pulseWidthDropdownGroup.style.display = "none";
             }
+
+          
 
 
             if (instrument.type == InstrumentType.fm || instrument.type == InstrumentType.fm6op) {
@@ -3387,6 +3415,14 @@ export class SongEditor {
                             settingList.push("eq filt cut");
                             settingList.push("eq filt peak");
                         }
+
+                        if (tgtInstrumentTypes.includes(InstrumentType.analog)) {
+                            settingList.push("am slider 1");
+                            settingList.push("am slider 2");
+                            settingList.push("am slider 3");
+                            settingList.push("am slider 4");
+                        }
+
                         if (tgtInstrumentTypes.includes(InstrumentType.fm)) {
                             settingList.push("fm slider 1");
                             settingList.push("fm slider 2");
@@ -3962,7 +3998,7 @@ export class SongEditor {
         window.requestAnimationFrame(this.updatePlayButton);
     }
 
-    private _onTrackAreaScroll = (event: Event): void => {
+    private _onTrackAreaScroll = (_event: Event): void => {
         this._doc.barScrollPos = (this._trackAndMuteContainer.scrollLeft / this._doc.getBarWidth());
         this._doc.channelScrollPos = (this._trackAndMuteContainer.scrollTop / ChannelRow.patternHeight);
         //this._doc.notifier.changed();
@@ -4422,6 +4458,11 @@ export class SongEditor {
                     event.preventDefault();
                 } 
                 break;
+        
+        
+        case 71: // G
+        this._doc.selection.groupChannels
+        break;
             case 72: // h
                 if (canPlayNotes) break;
 
@@ -5084,6 +5125,8 @@ export class SongEditor {
             this._instrumentSettingsArea.style.display = "none";
         }
     }
+    
+
 
     private _randomPreset(): void {
         const isNoise: boolean = this._doc.song.getChannelIsNoise(this._doc.channel);
@@ -5406,7 +5449,7 @@ export class SongEditor {
         this.refocusStage();
     }
 
-    private _fileMenuHandler = (event: Event): void => {
+    private _fileMenuHandler = (_event: Event): void => {
         switch (this._fileMenu.value) {
             case "new":
                 this._doc.goBackToStart();
@@ -5454,7 +5497,7 @@ export class SongEditor {
         this._fileMenu.selectedIndex = 0;
     }
 
-    private _editMenuHandler = (event: Event): void => {
+    private _editMenuHandler = (_event: Event): void => {
         switch (this._editMenu.value) {
             case "undo":
                 this._doc.undo();
@@ -5529,7 +5572,7 @@ export class SongEditor {
         this._editMenu.selectedIndex = 0;
     }
 
-    private _optionsMenuHandler = (event: Event): void => {
+    private _optionsMenuHandler = (_event: Event): void => {
         switch (this._optionsMenu.value) {
             case "autoPlay":
                 this._doc.prefs.autoPlay = !this._doc.prefs.autoPlay;
@@ -5619,7 +5662,7 @@ export class SongEditor {
         this._doc.prefs.save();
     }
 
-    private _customWavePresetHandler = (event: Event): void => {
+    private _customWavePresetHandler = (_event: Event): void => {
 
         // Update custom wave value
         let customWaveArray: Float32Array = new Float32Array(64);

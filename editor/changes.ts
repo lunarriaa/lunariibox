@@ -2171,6 +2171,12 @@ export class ChangeRemoveChannel extends ChangeGroup {
     }
 }
 
+export class ChangeGroupChannels extends ChangeGroup {
+        constructor(doc: SongDocument, minIndex: number, maxIndex: number) {
+                super();
+        }
+}
+
 export class ChangeChannelBar extends Change {
     constructor(doc: SongDocument, newChannel: number, newBar: number, silently: boolean = false) {
         super();

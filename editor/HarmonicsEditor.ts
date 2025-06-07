@@ -35,13 +35,15 @@ export class HarmonicsEditor {
     private _change: ChangeHarmonics | null = null;
     private _renderedPath: String = "";
     private _renderedFifths: boolean = true;
-    private instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-    //private readonly _initial: HarmonicsWave = this.instrument.harmonicsWave;
+    private instrument: Instrument;
+    private readonly _initial: HarmonicsWave;
 
     private _undoHistoryState: number = 0;
     private _changeQueue: number[][] = [];
 
     constructor(private _doc: SongDocument, private _isPrompt: boolean = false) {
+        this.instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this._initial = this.instrument.harmonicsWave;
         for (let i: number = 1; i <= Config.harmonicsControlPoints; i = i * 2) {
             this._octaves.appendChild(SVG.rect({ fill: ColorConfig.tonic, x: (i - 0.5) * (this._editorWidth - 8) / (Config.harmonicsControlPoints - 1) - 1, y: 0, width: 2, height: this._editorHeight }));
         }
@@ -238,11 +240,11 @@ export class HarmonicsEditor {
     }
 
     public resetToInitial() {
-        //const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
-        //this.setHarmonicsWave(this._initial.harmonics);
+        const instrument: Instrument = this._doc.song.channels[this._doc.channel].instruments[this._doc.getCurrentInstrument()];
+        this.setHarmonicsWave(this._initial.harmonics);
         this._changeQueue = [];
         this._undoHistoryState = 0;
-        //this._doc.record(new ChangeHarmonics(this._doc, instrument, this._initial));
+        this._doc.record(new ChangeHarmonics(this._doc, instrument, this._initial));
     }
 
     public render(): void {

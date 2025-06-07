@@ -420,7 +420,7 @@ var beepbox = (function (exports) {
     Config.attackVal = 0;
     Config.releaseVal = 0.25;
     Config.willReloadForCustomSamples = false;
-    Config.jsonFormat = "slarmoosbox";
+    Config.jsonFormat = "lunariibox";
     Config.scales = toNameMap([
         { name: "Free", realName: "chromatic", flags: [true, true, true, true, true, true, true, true, true, true, true, true] },
         { name: "Major", realName: "ionian", flags: [true, false, true, false, true, true, false, true, false, true, false, true] },
@@ -8331,8 +8331,8 @@ var beepbox = (function (exports) {
             return (_a = EditorConfig.presetCategories[0].presets.dictionary) === null || _a === void 0 ? void 0 : _a[TypePresets === null || TypePresets === void 0 ? void 0 : TypePresets[instrument]];
         }
     }
-    EditorConfig.version = "1.4.3";
-    EditorConfig.versionDisplayName = "Slarmoo's Box " + EditorConfig.version;
+    EditorConfig.version = "1.0.2";
+    EditorConfig.versionDisplayName = "Lunarii's Box " + EditorConfig.version;
     EditorConfig.releaseNotesURL = "./patch_notes.html";
     EditorConfig.isOnMac = /^Mac/i.test(navigator.platform) || /Mac OS X/i.test(navigator.userAgent) || /^(iPhone|iPad|iPod)/i.test(navigator.platform) || /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
     EditorConfig.ctrlSymbol = EditorConfig.isOnMac ? "⌘" : "Ctrl+";
@@ -12284,7 +12284,7 @@ var beepbox = (function (exports) {
             let bits;
             let buffer = [];
             buffer.push(Song._variant);
-            buffer.push(base64IntToCharCode[Song._latestSlarmoosBoxVersion]);
+            buffer.push(base64IntToCharCode[Song._latestLunariiBoxVersion]);
             buffer.push(78);
             var encodedSongTitle = encodeURIComponent(this.title);
             buffer.push(base64IntToCharCode[encodedSongTitle.length >> 6], base64IntToCharCode[encodedSongTitle.length & 0x3f]);
@@ -12967,6 +12967,7 @@ var beepbox = (function (exports) {
             let fromGoldBox = false;
             let fromUltraBox = false;
             let fromSlarmoosBox = false;
+            let fromLunariisBox = false;
             if (variantTest == 0x6A) {
                 fromJummBox = true;
                 charIndex++;
@@ -12991,6 +12992,10 @@ var beepbox = (function (exports) {
                 fromSlarmoosBox = true;
                 charIndex++;
             }
+            else if (variantTest == 0x6C) {
+                fromLunariisBox = true;
+                charIndex++;
+            }
             else {
                 fromBeepBox = true;
             }
@@ -13005,6 +13010,8 @@ var beepbox = (function (exports) {
                 return;
             if (fromSlarmoosBox && (version == -1 || version > Song._latestSlarmoosBoxVersion || version < Song._oldestSlarmoosBoxVersion))
                 return;
+            if (fromLunariisBox && (version == -1 || version > Song._latestLunariiBoxVersion || version < Song._oldestLunariiBoxVersion))
+                return;
             const beforeTwo = version < 2;
             const beforeThree = version < 3;
             const beforeFour = version < 4;
@@ -13016,7 +13023,7 @@ var beepbox = (function (exports) {
             this.initToDefault((fromBeepBox && beforeNine) || ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox)));
             const forceSimpleFilter = (fromBeepBox && beforeNine || fromJummBox && beforeFive);
             let willLoadLegacySamplesForOldSongs = false;
-            if (fromSlarmoosBox || fromUltraBox || fromGoldBox) {
+            if (fromSlarmoosBox || fromUltraBox || fromGoldBox || fromLunariisBox) {
                 compressed = compressed.replaceAll("%7C", "|");
                 var compressed_array = compressed.split("|");
                 compressed = compressed_array.shift();
@@ -13302,7 +13309,7 @@ var beepbox = (function (exports) {
                         break;
                     case 114:
                         {
-                            if (!fromUltraBox && !fromSlarmoosBox) {
+                            if (!fromUltraBox && !fromSlarmoosBox && !fromLunariisBox) {
                                 let newRhythm = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 this.rhythm = clamp(0, Config.rhythms.length, newRhythm);
                                 if (fromJummBox && beforeThree || fromBeepBox) {
@@ -13448,7 +13455,7 @@ var beepbox = (function (exports) {
                                     this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator].chipNoise = clamp(0, Config.chipNoises.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 }
                                 else {
-                                    if (fromSlarmoosBox || fromUltraBox) {
+                                    if (fromSlarmoosBox || fromUltraBox || fromLunariisBox) {
                                         const chipWaveReal = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         const chipWaveCounter = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         if (chipWaveCounter == 3) {
@@ -13530,7 +13537,7 @@ var beepbox = (function (exports) {
                                 let typeCheck = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 if (fromBeepBox || typeCheck == 0) {
                                     instrument.eqFilterType = false;
-                                    if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)
+                                    if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox || fromLunariisBox)
                                         typeCheck = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     const originalControlPointCount = typeCheck;
                                     instrument.eqFilter.controlPointCount = clamp(0, Config.filterMaxPoints + 1, originalControlPointCount);
@@ -13547,7 +13554,7 @@ var beepbox = (function (exports) {
                                         charIndex += 3;
                                     }
                                     instrument.eqSubFilters[0] = instrument.eqFilter;
-                                    if ((fromJummBox && !beforeFive) || (fromGoldBox && !beforeFour) || fromUltraBox || fromSlarmoosBox) {
+                                    if ((fromJummBox && !beforeFive) || (fromGoldBox && !beforeFour) || fromUltraBox || fromSlarmoosBox || fromLunariisBox) {
                                         let usingSubFilterBitfield = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         for (let j = 0; j < Config.filterMorphCount - 1; j++) {
                                             if (usingSubFilterBitfield & (1 << j)) {
@@ -13581,7 +13588,7 @@ var beepbox = (function (exports) {
                         break;
                     case 121:
                         {
-                            if (fromSlarmoosBox || fromUltraBox) {
+                            if (fromSlarmoosBox || fromUltraBox || fromLunariisBox) {
                                 if (beforeThree && fromUltraBox) {
                                     const sampleLoopInfoEncodedLength = decode32BitNumber(compressed, charIndex);
                                     charIndex += 6;
@@ -13650,7 +13657,7 @@ var beepbox = (function (exports) {
                                 if (instrument.type == 4) {
                                     for (let i = 0; i < Config.drumCount; i++) {
                                         let aa = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                        if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox))
+                                        if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox))
                                             aa = pregoldToEnvelope[aa];
                                         instrument.drumsetEnvelopes[i] = Song._envelopeFromLegacyIndex(aa).index;
                                     }
@@ -13658,7 +13665,7 @@ var beepbox = (function (exports) {
                                 else {
                                     const legacySettings = legacySettingsCache[instrumentChannelIterator][instrumentIndexIterator];
                                     let aa = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                    if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox))
+                                    if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox))
                                         aa = pregoldToEnvelope[aa];
                                     legacySettings.filterEnvelope = Song._envelopeFromLegacyIndex(aa);
                                     instrument.convertLegacySettings(legacySettings, forceSimpleFilter);
@@ -13667,9 +13674,9 @@ var beepbox = (function (exports) {
                             else {
                                 for (let i = 0; i < Config.drumCount; i++) {
                                     let aa = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                    if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox))
+                                    if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox))
                                         aa = pregoldToEnvelope[aa];
-                                    if (!fromSlarmoosBox && aa >= 2)
+                                    if (!fromSlarmoosBox && !fromLunariisBox && aa >= 2)
                                         aa++;
                                     instrument.drumsetEnvelopes[i] = clamp(0, Config.envelopes.length, aa);
                                 }
@@ -13687,12 +13694,12 @@ var beepbox = (function (exports) {
                                 const pregoldToEnvelope = [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16, 17, 18, 19, 20, 21, 23, 24, 25, 27, 28, 29, 32, 33, 34, 31, 11];
                                 const legacySettings = legacySettingsCache[instrumentChannelIterator][instrumentIndexIterator];
                                 let aa = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox))
+                                if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox))
                                     aa = pregoldToEnvelope[aa];
                                 legacySettings.pulseEnvelope = Song._envelopeFromLegacyIndex(aa);
                                 instrument.convertLegacySettings(legacySettings, forceSimpleFilter);
                             }
-                            if ((fromUltraBox && !beforeFour) || fromSlarmoosBox) {
+                            if ((fromUltraBox && !beforeFour) || fromSlarmoosBox || fromLunariisBox) {
                                 instrument.decimalOffset = clamp(0, 99 + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                             }
                         }
@@ -13745,7 +13752,7 @@ var beepbox = (function (exports) {
                                         }
                                     }
                                 }
-                                else if ((beforeFour && !fromGoldBox && !fromUltraBox && !fromSlarmoosBox) || fromBeepBox) {
+                                else if ((beforeFour && !fromGoldBox && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox) || fromBeepBox) {
                                     const settings = legacySettings[clamp(0, legacySettings.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)])];
                                     const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                     instrument.fadeIn = Synth.secondsToFadeInSetting(settings.fadeInSeconds);
@@ -13774,7 +13781,7 @@ var beepbox = (function (exports) {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 instrument.fadeIn = clamp(0, Config.fadeInRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 instrument.fadeOut = clamp(0, Config.fadeOutTicks.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)
+                                if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox || fromLunariisBox)
                                     instrument.clicklessTransition = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
                             }
                         }
@@ -13865,7 +13872,7 @@ var beepbox = (function (exports) {
                                 }
                             }
                             else {
-                                if (fromSlarmoosBox && !beforeFour) {
+                                if ((fromSlarmoosBox && !beforeFour) || (fromLunariisBox)) {
                                     const originalControlPointCount = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     this.eqFilter.controlPointCount = clamp(0, Config.filterMaxPoints + 1, originalControlPointCount);
                                     for (let i = this.eqFilter.controlPoints.length; i < this.eqFilter.controlPointCount; i++) {
@@ -13963,8 +13970,8 @@ var beepbox = (function (exports) {
                             else {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                const unisonLength = (beforeFive || !fromSlarmoosBox) ? 27 : Config.unisons.length;
-                                if (((fromUltraBox && !beforeFive) || fromSlarmoosBox) && (instrument.unison == unisonLength)) {
+                                const unisonLength = (beforeFive || !fromSlarmoosBox || !fromLunariisBox) ? 27 : Config.unisons.length;
+                                if (((fromUltraBox && !beforeFive) || fromSlarmoosBox || fromLunariisBox) && (instrument.unison == unisonLength)) {
                                     instrument.unison = Config.unisons.length;
                                     instrument.unisonVoices = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     const unisonSpreadNegative = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -14035,7 +14042,7 @@ var beepbox = (function (exports) {
                                 instrument.convertLegacySettings(legacySettings, forceSimpleFilter);
                             }
                             else {
-                                if (fromSlarmoosBox && !beforeFive) {
+                                if ((fromSlarmoosBox && !beforeFive) || (fromLunariisBox)) {
                                     instrument.effects = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 12) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 }
                                 else {
@@ -14045,7 +14052,7 @@ var beepbox = (function (exports) {
                                     let typeCheck = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     if (fromBeepBox || typeCheck == 0) {
                                         instrument.noteFilterType = false;
-                                        if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)
+                                        if (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox || fromLunariisBox)
                                             typeCheck = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         instrument.noteFilter.controlPointCount = clamp(0, Config.filterMaxPoints + 1, typeCheck);
                                         for (let i = instrument.noteFilter.controlPoints.length; i < instrument.noteFilter.controlPointCount; i++) {
@@ -14061,7 +14068,7 @@ var beepbox = (function (exports) {
                                             charIndex += 3;
                                         }
                                         instrument.noteSubFilters[0] = instrument.noteFilter;
-                                        if ((fromJummBox && !beforeFive) || (fromGoldBox) || (fromUltraBox) || (fromSlarmoosBox)) {
+                                        if ((fromJummBox && !beforeFive) || (fromGoldBox) || (fromUltraBox) || (fromSlarmoosBox) || (fromLunariisBox)) {
                                             let usingSubFilterBitfield = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             for (let j = 0; j < Config.filterMorphCount - 1; j++) {
                                                 if (usingSubFilterBitfield & (1 << j)) {
@@ -14097,11 +14104,11 @@ var beepbox = (function (exports) {
                                 }
                                 if (effectsIncludeChord(instrument.effects)) {
                                     instrument.chord = clamp(0, Config.chords.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                    if (instrument.chord == Config.chords.dictionary["arpeggio"].index && (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)) {
+                                    if (instrument.chord == Config.chords.dictionary["arpeggio"].index && (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox || fromLunariisBox)) {
                                         instrument.arpeggioSpeed = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         instrument.fastTwoNoteArp = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) ? true : false;
                                     }
-                                    if (instrument.chord == Config.chords.dictionary["monophonic"].index && fromSlarmoosBox && !beforeFive) {
+                                    if (instrument.chord == Config.chords.dictionary["monophonic"].index && (fromSlarmoosBox && !beforeFive) || (fromLunariisBox)) {
                                         instrument.monoChordTone = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     }
                                 }
@@ -14119,7 +14126,7 @@ var beepbox = (function (exports) {
                                 }
                                 if (effectsIncludeVibrato(instrument.effects)) {
                                     instrument.vibrato = clamp(0, Config.vibratos.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                    if (instrument.vibrato == Config.vibratos.length && (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox)) {
+                                    if (instrument.vibrato == Config.vibratos.length && (fromJummBox || fromGoldBox || fromUltraBox || fromSlarmoosBox || fromLunariisBox)) {
                                         instrument.vibratoDepth = clamp(0, Config.modulators.dictionary["vibrato depth"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) / 25;
                                         instrument.vibratoSpeed = clamp(0, Config.modulators.dictionary["vibrato speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         instrument.vibratoDelay = clamp(0, Config.modulators.dictionary["vibrato delay"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -14134,7 +14141,7 @@ var beepbox = (function (exports) {
                                 }
                                 if (effectsIncludeDistortion(instrument.effects)) {
                                     instrument.distortion = clamp(0, Config.distortionRange, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                    if ((fromJummBox && !beforeFive) || fromGoldBox || fromUltraBox || fromSlarmoosBox)
+                                    if ((fromJummBox && !beforeFive) || fromGoldBox || fromUltraBox || fromSlarmoosBox || fromLunariisBox)
                                         instrument.aliases = base64CharCodeToInt[compressed.charCodeAt(charIndex++)] ? true : false;
                                 }
                                 if (effectsIncludeBitcrusher(instrument.effects)) {
@@ -14148,7 +14155,7 @@ var beepbox = (function (exports) {
                                     else {
                                         instrument.pan = clamp(0, Config.panMax + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                     }
-                                    if ((fromJummBox && !beforeTwo) || fromGoldBox || fromUltraBox || fromSlarmoosBox)
+                                    if ((fromJummBox && !beforeTwo) || fromGoldBox || fromUltraBox || fromSlarmoosBox || fromLunariisBox)
                                         instrument.panDelay = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 }
                                 if (effectsIncludeChorus(instrument.effects)) {
@@ -14225,7 +14232,7 @@ var beepbox = (function (exports) {
                             else if ((fromJummBox && beforeFive) || (beforeFour && fromGoldBox)) {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 instrument.pan = clamp(0, Config.panMax + 1, (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                if (fromJummBox && !beforeThree || fromGoldBox || fromUltraBox || fromSlarmoosBox) {
+                                if (fromJummBox && !beforeThree || fromGoldBox || fromUltraBox || fromSlarmoosBox || fromLunariisBox) {
                                     instrument.panDelay = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 }
                             }
@@ -14285,7 +14292,7 @@ var beepbox = (function (exports) {
                         {
                             for (let channel = 0; channel < this.getChannelCount(); channel++) {
                                 var channelNameLength;
-                                if (beforeFour && !fromGoldBox && !fromUltraBox && !fromSlarmoosBox)
+                                if (beforeFour && !fromGoldBox && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox)
                                     channelNameLength = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                 else
                                     channelNameLength = ((base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -14410,7 +14417,7 @@ var beepbox = (function (exports) {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 const legacySettings = legacySettingsCache[instrumentChannelIterator][instrumentIndexIterator];
                                 let aa = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox))
+                                if ((beforeTwo && fromGoldBox) || (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox))
                                     aa = pregoldToEnvelope[aa];
                                 legacySettings.feedbackEnvelope = Song._envelopeFromLegacyIndex(base64CharCodeToInt[aa]);
                                 instrument.convertLegacySettings(legacySettings, forceSimpleFilter);
@@ -14426,7 +14433,7 @@ var beepbox = (function (exports) {
                                     instrument.operators[o].frequency = freqToGold3[clamp(0, freqToGold3.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)])];
                                 }
                             }
-                            else if (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox) {
+                            else if (!fromGoldBox && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox) {
                                 const freqToUltraBox = [4, 5, 6, 7, 8, 10, 12, 13, 14, 15, 16, 18, 20, 23, 27, 2, 1, 9, 17, 19, 21, 23, 0, 3];
                                 for (let o = 0; o < (instrument.type == 11 ? 6 : Config.operatorCount); o++) {
                                     instrument.operators[o].frequency = freqToUltraBox[clamp(0, freqToUltraBox.length, base64CharCodeToInt[compressed.charCodeAt(charIndex++)])];
@@ -14469,9 +14476,9 @@ var beepbox = (function (exports) {
                             else {
                                 const envelopeCount = clamp(0, Config.maxEnvelopeCount + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 let envelopeDiscrete = false;
-                                if ((fromJummBox && !beforeSix) || (fromUltraBox && !beforeFive) || (fromSlarmoosBox)) {
+                                if ((fromJummBox && !beforeSix) || (fromUltraBox && !beforeFive) || (fromSlarmoosBox) || (fromLunariisBox)) {
                                     instrument.envelopeSpeed = clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                    if (!fromSlarmoosBox || beforeFive) {
+                                    if ((!fromSlarmoosBox || beforeFive) && (!fromLunariisBox)) {
                                         envelopeDiscrete = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) ? true : false;
                                     }
                                 }
@@ -14487,11 +14494,11 @@ var beepbox = (function (exports) {
                                         aa = pregoldToEnvelope[aa];
                                     if (fromJummBox)
                                         aa = jummToUltraEnvelope[aa];
-                                    if (!fromSlarmoosBox && aa >= 2)
+                                    if (!fromSlarmoosBox && !fromLunariisBox && aa >= 2)
                                         aa++;
                                     let updatedEnvelopes = false;
                                     let perEnvelopeSpeed = 1;
-                                    if (!fromSlarmoosBox || beforeThree) {
+                                    if ((!fromSlarmoosBox || beforeThree) || (!fromLunariisBox)) {
                                         updatedEnvelopes = true;
                                         perEnvelopeSpeed = Config.envelopes[aa].speed;
                                         aa = Config.envelopes[aa].type;
@@ -14499,22 +14506,22 @@ var beepbox = (function (exports) {
                                     else if (beforeFour && aa >= 3)
                                         aa++;
                                     let isTremolo2 = false;
-                                    if ((fromSlarmoosBox && !beforeThree && beforeFour) || updatedEnvelopes) {
+                                    if ((fromSlarmoosBox && !beforeThree && beforeFour) || (fromLunariisBox) || updatedEnvelopes) {
                                         if (aa == 9)
                                             isTremolo2 = true;
                                         aa = slarURL3toURL4Envelope[aa];
                                     }
-                                    const envelope = clamp(0, ((fromSlarmoosBox && !beforeThree || updatedEnvelopes) ? Config.newEnvelopes.length : Config.envelopes.length), aa);
+                                    const envelope = clamp(0, (((fromSlarmoosBox && !beforeThree) || (fromLunariisBox) || updatedEnvelopes) ? Config.newEnvelopes.length : Config.envelopes.length), aa);
                                     let pitchEnvelopeStart = 0;
                                     let pitchEnvelopeEnd = Config.maxPitch;
                                     let envelopeInverse = false;
-                                    perEnvelopeSpeed = (fromSlarmoosBox && !beforeThree) ? Config.newEnvelopes[envelope].speed : perEnvelopeSpeed;
+                                    perEnvelopeSpeed = ((fromSlarmoosBox && !beforeThree) || (fromLunariisBox)) ? Config.newEnvelopes[envelope].speed : perEnvelopeSpeed;
                                     let perEnvelopeLowerBound = 0;
                                     let perEnvelopeUpperBound = 1;
                                     let steps = 2;
                                     let seed = 2;
                                     let waveform = 0;
-                                    if (fromSlarmoosBox && !beforeFour) {
+                                    if ((fromSlarmoosBox && !beforeFour) || (fromLunariisBox)) {
                                         if (Config.newEnvelopes[envelope].name == "lfo") {
                                             waveform = clamp(0, 7, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                             if (waveform == 5 || waveform == 6) {
@@ -14527,7 +14534,7 @@ var beepbox = (function (exports) {
                                             waveform = clamp(0, 4, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                         }
                                     }
-                                    if (fromSlarmoosBox && !beforeThree) {
+                                    if ((fromSlarmoosBox && !beforeThree) || (fromLunariisBox) || updatedEnvelopes) {
                                         if (Config.newEnvelopes[envelope].name == "pitch") {
                                             if (!instrument.isNoiseInstrument) {
                                                 let pitchEnvelopeCompact = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -14541,7 +14548,7 @@ var beepbox = (function (exports) {
                                             }
                                         }
                                         let checkboxValues = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
-                                        if (fromSlarmoosBox && !beforeFive) {
+                                        if ((fromSlarmoosBox && !beforeFive) || (fromLunariisBox)) {
                                             envelopeDiscrete = (checkboxValues >> 1) == 1 ? true : false;
                                         }
                                         envelopeInverse = (checkboxValues & 1) == 1 ? true : false;
@@ -14565,7 +14572,7 @@ var beepbox = (function (exports) {
                                         }
                                     }
                                     instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete);
-                                    if (fromSlarmoosBox && beforeThree && !beforeTwo) {
+                                    if ((fromSlarmoosBox && beforeThree && !beforeTwo) || (fromLunariisBox)) {
                                         let pitchEnvelopeCompact = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         instrument.envelopes[i].pitchEnvelopeStart = pitchEnvelopeCompact * 64 + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         pitchEnvelopeCompact = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -14677,7 +14684,7 @@ var beepbox = (function (exports) {
                                 }
                             }
                             else {
-                                if (fromUltraBox || fromSlarmoosBox) {
+                                if (fromUltraBox || fromSlarmoosBox || fromLunariisBox) {
                                     const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                     instrument.decimalOffset = clamp(0, 50 + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                                 }
@@ -15052,7 +15059,7 @@ var beepbox = (function (exports) {
                                                     note.continuesLastPattern = (bits.read(1) == 1);
                                                 }
                                                 else {
-                                                    if ((beforeFour && !fromUltraBox && !fromSlarmoosBox) || fromBeepBox) {
+                                                    if ((beforeFour && !fromUltraBox && !fromSlarmoosBox && !fromLunariisBox) || fromBeepBox) {
                                                         note.continuesLastPattern = false;
                                                     }
                                                     else {
@@ -16056,6 +16063,8 @@ var beepbox = (function (exports) {
     Song._latestUltraBoxVersion = 5;
     Song._oldestSlarmoosBoxVersion = 1;
     Song._latestSlarmoosBoxVersion = 5;
+    Song._oldestLunariiBoxVersion = 1;
+    Song._latestLunariiBoxVersion = 1;
     Song._variant = 0x6C;
     class PickedString {
         constructor() {
@@ -21069,6 +21078,7 @@ var beepbox = (function (exports) {
             chipFunction(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState);
         }
         static analogSynth(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) {
+            var _a, _b, _c;
             const data = synth.tempMonoInstrumentSampleBuffer;
             const waveforms = {
                 sine: (phase) => Math.sin(2 * Math.PI * phase),
@@ -21076,28 +21086,31 @@ var beepbox = (function (exports) {
                 triangle: (phase) => 4 * Math.abs(phase - 0.5) - 1,
                 sawtooth: (phase) => 2 * (phase - Math.floor(phase + 0.5)),
             };
-            const selectedWaveforms = [
-                waveforms.sine,
-                waveforms.square,
-                waveforms.triangle,
-                waveforms.sawtooth
-            ];
-            const phases = [0, 0, 0, 0];
-            const phaseDeltas = tone.phaseDeltas.slice(0, 4);
+            let carrierWaveform = "sine";
+            let modulatorWaveform = "sine";
+            if (instrumentState.carrierWaveform)
+                carrierWaveform = instrumentState.carrierWaveform;
+            if (instrumentState.modulatorWaveform)
+                modulatorWaveform = instrumentState.modulatorWaveform;
+            const modDepth = (_a = instrumentState.modDepth) !== null && _a !== void 0 ? _a : 0;
+            const modRate = (_b = instrumentState.modRate) !== null && _b !== void 0 ? _b : 1;
+            let carrierPhase = tone.phases[0];
+            let modulatorPhase = tone.phases[1];
+            const carrierPhaseDelta = tone.phaseDeltas[0];
+            const modulatorPhaseDelta = ((_c = tone.phaseDeltas[1]) !== null && _c !== void 0 ? _c : tone.phaseDeltas[0]) * modRate;
+            const carrierFn = waveforms[carrierWaveform] || waveforms.sine;
+            const modulatorFn = waveforms[modulatorWaveform] || waveforms.sine;
             for (let sampleIndex = bufferIndex; sampleIndex < bufferIndex + roundedSamplesPerTick; sampleIndex++) {
-                let sample = 0;
-                for (let osc = 0; osc < 4; osc++) {
-                    const phase = phases[osc] % 1;
-                    sample += selectedWaveforms[osc](phase);
-                    phases[osc] += phaseDeltas[osc];
-                }
-                sample /= 4;
-                data[sampleIndex] += sample * tone.expression;
+                const modValue = modulatorFn(modulatorPhase % 1);
+                const amplitude = 1 + modValue * modDepth;
+                const carrierSample = carrierFn(carrierPhase % 1) * amplitude;
+                data[sampleIndex] += carrierSample * tone.expression;
                 tone.expression += tone.expressionDelta;
+                carrierPhase += carrierPhaseDelta;
+                modulatorPhase += modulatorPhaseDelta;
             }
-            for (let osc = 0; osc < 4; osc++) {
-                tone.phases[osc] = phases[osc];
-            }
+            tone.phases[0] = carrierPhase;
+            tone.phases[1] = modulatorPhase;
         }
         static chipSynth(synth, bufferIndex, roundedSamplesPerTick, tone, instrumentState) {
             const voiceCount = Math.max(2, instrumentState.unisonVoices);
