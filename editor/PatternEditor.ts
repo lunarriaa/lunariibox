@@ -116,7 +116,7 @@ export class PatternEditor {
 
     constructor(private _doc: SongDocument, private _interactive: boolean, private _barOffset: number) {
         this._svgNoteBackground =  SVG.pattern({ id: "patternEditorNoteBackground"  + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" }); 
-        this._svgDrumBackground = SVG.pattern({ id: "patternEditorDrumBackground + this._barOffset", x: "0", y: "0", patternUnits: "userSpaceOnUse" }); 
+        this._svgDrumBackground = SVG.pattern({ id: "patternEditorDrumBackground" + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" }); 
         this._svgModBackground = SVG.pattern({ id: "patternEditorModBackground" + this._barOffset, x: "0", y: "0", patternUnits: "userSpaceOnUse" });
         this._svgBackground = SVG.rect({ x: "0", y: "0", "pointer-events": "none", fill: "url(#patternEditorNoteBackground" + this._barOffset + ")" });
         this._svgNoteContainer = SVG.svg();

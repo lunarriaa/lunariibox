@@ -1157,7 +1157,6 @@ html {
 }
 
 .beepboxEditor button.playButton, .beepboxEditor button.pauseButton, .beepboxEditor button.recordButton, .beepboxEditor button.stopButton, .beepboxEditor button.okayButton, .beepboxEditor button.exportButton {
-	padding-left: var(--button-size);
 }
 .beepboxEditor button.playButton, .beepboxEditor button.pauseButton, .beepboxEditor button.recordButton {
 	grid-column-start: 1;
@@ -1254,19 +1253,17 @@ html {
 
 .beepboxEditor .tab-bar-container {
         display: flex;
+        overflow-x: scroll;
 gap: 2px;      
 }
 
 .beepboxEditor .tab-bar-container .tab-bar {
        display: flex;
+       width: 100%;
+       height: 40px;
 }
 
 .beepboxEditor .tab-bar-button {
-flex-grow: 1;
-min-width: 0;
-padding: 0;     
-flex-basis: 0;
-display: flex;
 align-items: center;
 justify-content: center;
 color: var(--text-color-lit);
@@ -1457,16 +1454,42 @@ color: var(--text-color-lit);
 
 .beepboxEditor .menu-area {
 	display: flex;
-        align-content: center;
+        drop-shadow: 0px 11px 24px 6px rgba(0,0,0,0.44);
+        flex-basis: auto;
+        justify-content: space-between;
 	flex-direction: row;
 }
 .beepboxEditor .menu-area > * {
-align-content: center;
-        margin-right: 5px;
+justify-content: space-between;
+  drop-shadow: 0px 11px 24px 6px rgba(0,0,0,0.44);
 }
 .beepboxEditor .menu-area > button {
-	margin-right: 5px;
+          drop-shadow: 0px 11px 24px 6px rgba(0,0,0,0.44);
 	white-space: nowrap;
+}
+
+.beepboxEditor button.zoomButton {
+border-radius: 10px;
+width: 20px;
+margin-right: 5px;
+mask-image: var(--internal-add-symbol);
+mask-repeat: no-repeat;
+mask-position: center;
+-webkit-mask-image: var(--internal-add-symbol);
+-webkit-mask-repeat: no-repeat;
+-webkit-mask-position: center;
+}
+
+.beepboxEditor button.drumZoomButton {
+border-radius: 10px;
+width: 20px;
+margin-right: 5px;
+mask-image: var(--internal-add-symbol);
+mask-repeat: no-repeat;
+mask-position: center;
+-webkit-mask-image: var(--internal-add-symbol);
+-webkit-mask-repeat: no-repeat;
+-webkit-mask-position: center;
 }
 
 .beepboxEditor .song-settings-area {

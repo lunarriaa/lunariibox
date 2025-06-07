@@ -4526,6 +4526,7 @@ export class ChangeTempo extends Change {
     }
 }
 
+
 export class ChangeEchoDelay extends ChangeInstrumentSlider {
     constructor(doc: SongDocument, oldValue: number, newValue: number) {
         super(doc);

@@ -3496,7 +3496,7 @@ export class Song {
         this.beatsPerBar = 8;
         this.barCount = 16;
         this.patternsPerChannel = 8;
-        this.rhythm = 1; 
+        this.rhythm = 2; 
         this.layeredInstruments = false;
         this.patternInstruments = false;
         this.eqFilter.reset();
@@ -4419,7 +4419,7 @@ export class Song {
                     else {
                         // UB version 2 URLs and below will be using the old syntax, so we do need to parse it in that case.
                         // UB version 3 URLs should only have the new syntax, though, unless the user has edited the URL manually.
-                        const parseOldSyntax: boolean = beforeThree;
+                        const parseOldSyntax: boolean = fromUltraBox && beforeThree;
                         const ok: boolean = Song._parseAndConfigureCustomSample(url, customSampleUrls, customSamplePresets, sampleLoadingState, parseOldSyntax);
                         if (!ok) {
                             continue;
@@ -5345,7 +5345,7 @@ export class Song {
                 } else {
                     const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                     instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                    const unisonLength = (beforeFive || !fromSlarmoosBox || !fromLunariisBox) ? 27 : Config.unisons.length; //27 was the old length before I added >2 voice presets
+                    const unisonLength = ((fromSlarmoosBox && beforeFive) || (!fromSlarmoosBox && !fromLunariisBox)) ? 27 : Config.unisons.length; //27 was the old length before I added >2 voice presets
                     if (((fromUltraBox && !beforeFive) || fromSlarmoosBox || fromLunariisBox) && (instrument.unison == unisonLength)) {
                         // if (instrument.unison == Config.unisons.length) {
                         instrument.unison = Config.unisons.length;
@@ -5501,7 +5501,7 @@ export class Song {
                             instrument.arpeggioSpeed = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                             instrument.fastTwoNoteArp = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) ? true : false;
                         }
-                        if (instrument.chord == Config.chords.dictionary["monophonic"].index && (fromSlarmoosBox && !beforeFive) || (fromLunariisBox)) {
+                        if (instrument.chord == Config.chords.dictionary["monophonic"].index && ((fromSlarmoosBox && !beforeFive) || fromLunariisBox)) {
                             instrument.monoChordTone = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                         }
                     }
@@ -5872,7 +5872,7 @@ export class Song {
                     let envelopeDiscrete: boolean = false;
                     if ((fromJummBox && !beforeSix) || (fromUltraBox && !beforeFive) || (fromSlarmoosBox) || (fromLunariisBox) ) {
                         instrument.envelopeSpeed = clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                        if((!fromSlarmoosBox || beforeFive) && (!fromLunariisBox)) {
+                        if((!fromSlarmoosBox && !fromLunariisBox) || (fromSlarmoosBox && beforeFive)) {
                             envelopeDiscrete = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) ? true : false;
                         }
                     }
@@ -5886,20 +5886,20 @@ export class Song {
                         let aa: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                         if ((beforeTwo && fromGoldBox) || (fromBeepBox)) aa = pregoldToEnvelope[aa];
                         if (fromJummBox) aa = jummToUltraEnvelope[aa];
-                        if (!fromSlarmoosBox && !fromLunariisBox && aa >= 2) aa++; //2 for pitch
+                        if ((!fromSlarmoosBox &&        !fromLunariisBox) && aa >= 2) aa++; //2 for pitch
                         let updatedEnvelopes: boolean = false;
                         let perEnvelopeSpeed: number = 1;
-                        if ((!fromSlarmoosBox || beforeThree) || (!fromLunariisBox)) {
+                        if ((!fromSlarmoosBox && !fromLunariisBox) || (fromSlarmoosBox && beforeThree)) {
                             updatedEnvelopes = true;
                             perEnvelopeSpeed = Config.envelopes[aa].speed;
                             aa = Config.envelopes[aa].type; //update envelopes
-                        } else if (beforeFour && aa >= 3) aa++; //3 for random
+                        } else if ((beforeFour && fromSlarmoosBox) && aa >= 3) aa++; //3 for random
                         let isTremolo2: boolean = false;
-                        if ((fromSlarmoosBox && !beforeThree && beforeFour) || (fromLunariisBox) || updatedEnvelopes) { //remove tremolo2
+                        if ((fromSlarmoosBox && !beforeThree && beforeFour) || updatedEnvelopes) { // remove tremolo2, only for #s3 urls
                             if(aa == 9) isTremolo2 = true;
                             aa = slarURL3toURL4Envelope[aa]; 
                         }
-                        const envelope: number = clamp(0, (((fromSlarmoosBox && !beforeThree) || (fromLunariisBox) || updatedEnvelopes) ? Config.newEnvelopes.length : Config.envelopes.length), aa);
+                        const envelope: number = clamp(0, (((fromSlarmoosBox && !beforeThree) || updatedEnvelopes) ? Config.newEnvelopes.length : Config.envelopes.length), aa);
                         let pitchEnvelopeStart: number = 0;
                         let pitchEnvelopeEnd: number = Config.maxPitch;
                         let envelopeInverse: boolean = false;
@@ -5959,7 +5959,7 @@ export class Song {
                         }
 
                         instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete);
-                        if ((fromSlarmoosBox && beforeThree && !beforeTwo) || (fromLunariisBox)) {
+                        if ((fromSlarmoosBox && beforeThree && !beforeTwo)) { // Only for #s2 urls
                             let pitchEnvelopeCompact: number = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                             instrument.envelopes[i].pitchEnvelopeStart = pitchEnvelopeCompact * 64 + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                             pitchEnvelopeCompact = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];

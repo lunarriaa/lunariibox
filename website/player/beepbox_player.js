@@ -412,6 +412,51 @@ var beepbox = (function (exports) {
         }
     }
     class Config {
+        static generateSineWave() {
+            const wave = new Float32Array(_a$1.sineWaveLength + 1);
+            for (let i = 0; i < _a$1.sineWaveLength + 1; i++) {
+                wave[i] = Math.sin(i * Math.PI * 2.0 / _a$1.sineWaveLength);
+            }
+            return wave;
+        }
+        static generateTriWave() {
+            const wave = new Float32Array(_a$1.sineWaveLength + 1);
+            for (let i = 0; i < _a$1.sineWaveLength + 1; i++) {
+                wave[i] = Math.asin(Math.sin(i * Math.PI * 2.0 / _a$1.sineWaveLength)) / (Math.PI / 2);
+            }
+            return wave;
+        }
+        static generateTrapezoidWave(drive = 2) {
+            const wave = new Float32Array(_a$1.sineWaveLength + 1);
+            for (let i = 0; i < _a$1.sineWaveLength + 1; i++) {
+                wave[i] = Math.max(-1.0, Math.min(1.0, Math.asin(Math.sin(i * Math.PI * 2.0 / _a$1.sineWaveLength)) * drive));
+            }
+            return wave;
+        }
+        static generateSquareWave(phaseWidth = 0) {
+            const wave = new Float32Array(_a$1.sineWaveLength + 1);
+            const centerPoint = _a$1.sineWaveLength / 4;
+            for (let i = 0; i < _a$1.sineWaveLength + 1; i++) {
+                wave[i] = +((Math.abs(i - centerPoint) < phaseWidth * _a$1.sineWaveLength / 2)
+                    || ((Math.abs(i - _a$1.sineWaveLength - centerPoint) < phaseWidth * _a$1.sineWaveLength / 2))) * 2 - 1;
+            }
+            return wave;
+        }
+        static generateSawWave(inverse = false) {
+            const wave = new Float32Array(_a$1.sineWaveLength + 1);
+            for (let i = 0; i < _a$1.sineWaveLength + 1; i++) {
+                wave[i] = ((i + (_a$1.sineWaveLength / 4.0)) * 2.0 / _a$1.sineWaveLength) % 2 - 1;
+                wave[i] = inverse ? -wave[i] : wave[i];
+            }
+            return wave;
+        }
+        static generateQuasiSineWave() {
+            const wave = new Float32Array(_a$1.sineWaveLength + 1);
+            for (let i = 0; i < _a$1.sineWaveLength + 1; i++) {
+                wave[i] = Math.round(Math.sin(i * Math.PI * 2.0 / _a$1.sineWaveLength));
+            }
+            return wave;
+        }
     }
     _a$1 = Config;
     Config.thresholdVal = -10;
@@ -420,7 +465,7 @@ var beepbox = (function (exports) {
     Config.attackVal = 0;
     Config.releaseVal = 0.25;
     Config.willReloadForCustomSamples = false;
-    Config.jsonFormat = "lunariibox";
+    Config.jsonFormat = "slarmoosbox";
     Config.scales = toNameMap([
         { name: "Free", realName: "chromatic", flags: [true, true, true, true, true, true, true, true, true, true, true, true] },
         { name: "Major", realName: "ionian", flags: [true, false, true, false, true, true, false, true, false, true, false, true] },
@@ -489,12 +534,14 @@ var beepbox = (function (exports) {
     Config.ticksPerArpeggio = 3;
     Config.arpeggioPatterns = [[0], [0, 1], [0, 1, 2, 1], [0, 1, 2, 3], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 4, 5, 6, 7]];
     Config.rhythms = toNameMap([
+        { name: "÷2", stepsPerBeat: 2, roundUpThresholds: [7, 11] },
         { name: "÷3 (triplets)", stepsPerBeat: 3, roundUpThresholds: [5, 12, 18] },
         { name: "÷4 (standard)", stepsPerBeat: 4, roundUpThresholds: [3, 9, 17, 21] },
         { name: "÷6", stepsPerBeat: 6, roundUpThresholds: null },
         { name: "÷8", stepsPerBeat: 8, roundUpThresholds: null },
         { name: "÷12", stepsPerBeat: 12, roundUpThresholds: null },
-        { name: "freehand", stepsPerBeat: 24, roundUpThresholds: null },
+        { name: "÷16", stepsPerBeat: 16, roundUpThresholds: null },
+        { name: "÷24", stepsPerBeat: 24, roundUpThresholds: null },
     ]);
     Config.instrumentTypeNames = ["chip", "FM", "noise", "spectrum", "drumset", "harmonics", "PWM", "Picked String", "supersaw", "custom chip", "mod", "FM6op"];
     Config.instrumentTypeHasSpecialInterval = [true, true, false, false, false, true, false, false, false, false, false];
@@ -1018,7 +1065,7 @@ var beepbox = (function (exports) {
     Config.unisonSignMax = 2;
     Config.sineWaveLength = 1 << 8;
     Config.sineWaveMask = _a$1.sineWaveLength - 1;
-    Config.sineWave = generateSineWave();
+    Config.sineWave = _a$1.generateSineWave();
     Config.perEnvelopeSpeedIndices = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.25, 0.3, 0.3333, 0.4, 0.5, 0.6, 0.6667, 0.7, 0.75, 0.8, 0.9, 1, 1.25, 1.3333, 1.5, 1.6667, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 32, 40, 64, 128, 256];
     Config.perEnvelopeSpeedToIndices = {
         0: 0,
@@ -1140,25 +1187,25 @@ var beepbox = (function (exports) {
     ]);
     Config.operatorWaves = toNameMap([
         { name: "sine", samples: _a$1.sineWave },
-        { name: "triangle", samples: generateTriWave() },
-        { name: "pulse width", samples: generateSquareWave(0.5) },
-        { name: "sawtooth", samples: generateSawWave() },
-        { name: "ramp", samples: generateSawWave(true) },
-        { name: "trapezoid", samples: generateTrapezoidWave(2) },
-        { name: "quasi-sine", samples: generateQuasiSineWave() },
+        { name: "triangle", samples: _a$1.generateTriWave() },
+        { name: "pulse width", samples: _a$1.generateSquareWave(0.5) },
+        { name: "sawtooth", samples: _a$1.generateSawWave() },
+        { name: "ramp", samples: _a$1.generateSawWave(true) },
+        { name: "trapezoid", samples: _a$1.generateTrapezoidWave(2) },
+        { name: "quasi-sine", samples: _a$1.generateQuasiSineWave() },
     ]);
     Config.pwmOperatorWaves = toNameMap([
-        { name: "1%", samples: generateSquareWave(0.01) },
-        { name: "5%", samples: generateSquareWave(0.05) },
-        { name: "12.5%", samples: generateSquareWave(0.125) },
-        { name: "25%", samples: generateSquareWave(0.25) },
-        { name: "33%", samples: generateSquareWave(1 / 3) },
-        { name: "50%", samples: generateSquareWave(0.5) },
-        { name: "66%", samples: generateSquareWave(2 / 3) },
-        { name: "75%", samples: generateSquareWave(0.75) },
-        { name: "87.5%", samples: generateSquareWave(0.875) },
-        { name: "95%", samples: generateSquareWave(0.95) },
-        { name: "99%", samples: generateSquareWave(0.99) },
+        { name: "1%", samples: _a$1.generateSquareWave(0.01) },
+        { name: "5%", samples: _a$1.generateSquareWave(0.05) },
+        { name: "12.5%", samples: _a$1.generateSquareWave(0.125) },
+        { name: "25%", samples: _a$1.generateSquareWave(0.25) },
+        { name: "33%", samples: _a$1.generateSquareWave(1 / 3) },
+        { name: "50%", samples: _a$1.generateSquareWave(0.5) },
+        { name: "66%", samples: _a$1.generateSquareWave(2 / 3) },
+        { name: "75%", samples: _a$1.generateSquareWave(0.75) },
+        { name: "87.5%", samples: _a$1.generateSquareWave(0.875) },
+        { name: "95%", samples: _a$1.generateSquareWave(0.95) },
+        { name: "99%", samples: _a$1.generateSquareWave(0.99) },
     ]);
     Config.barEditorHeight = 10;
     Config.modulators = toNameMap([
@@ -1491,51 +1538,6 @@ var beepbox = (function (exports) {
             wave[waveLength - i] = Math.sin(radians) * amplitude;
         }
         return combinedAmplitude;
-    }
-    function generateSineWave() {
-        const wave = new Float32Array(Config.sineWaveLength + 1);
-        for (let i = 0; i < Config.sineWaveLength + 1; i++) {
-            wave[i] = Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength);
-        }
-        return wave;
-    }
-    function generateTriWave() {
-        const wave = new Float32Array(Config.sineWaveLength + 1);
-        for (let i = 0; i < Config.sineWaveLength + 1; i++) {
-            wave[i] = Math.asin(Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength)) / (Math.PI / 2);
-        }
-        return wave;
-    }
-    function generateTrapezoidWave(drive = 2) {
-        const wave = new Float32Array(Config.sineWaveLength + 1);
-        for (let i = 0; i < Config.sineWaveLength + 1; i++) {
-            wave[i] = Math.max(-1.0, Math.min(1.0, Math.asin(Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength)) * drive));
-        }
-        return wave;
-    }
-    function generateSquareWave(phaseWidth = 0) {
-        const wave = new Float32Array(Config.sineWaveLength + 1);
-        const centerPoint = Config.sineWaveLength / 4;
-        for (let i = 0; i < Config.sineWaveLength + 1; i++) {
-            wave[i] = +((Math.abs(i - centerPoint) < phaseWidth * Config.sineWaveLength / 2)
-                || ((Math.abs(i - Config.sineWaveLength - centerPoint) < phaseWidth * Config.sineWaveLength / 2))) * 2 - 1;
-        }
-        return wave;
-    }
-    function generateSawWave(inverse = false) {
-        const wave = new Float32Array(Config.sineWaveLength + 1);
-        for (let i = 0; i < Config.sineWaveLength + 1; i++) {
-            wave[i] = ((i + (Config.sineWaveLength / 4.0)) * 2.0 / Config.sineWaveLength) % 2 - 1;
-            wave[i] = inverse ? -wave[i] : wave[i];
-        }
-        return wave;
-    }
-    function generateQuasiSineWave() {
-        const wave = new Float32Array(Config.sineWaveLength + 1);
-        for (let i = 0; i < Config.sineWaveLength + 1; i++) {
-            wave[i] = Math.round(Math.sin(i * Math.PI * 2.0 / Config.sineWaveLength));
-        }
-        return wave;
     }
     function getArpeggioPitchIndex(pitchCount, useFastTwoNoteArp, arpeggio) {
         let arpeggioPattern = Config.arpeggioPatterns[pitchCount - 1];
@@ -2340,7 +2342,7 @@ var beepbox = (function (exports) {
     }
     ColorConfig.colorLookup = new Map();
     ColorConfig.usesColorFormula = false;
-    ColorConfig.defaultTheme = "slarmoosbox";
+    ColorConfig.defaultTheme = "nebula";
     ColorConfig.themes = {
         "dark classic": ``,
         "dark competition": `
@@ -8331,7 +8333,7 @@ var beepbox = (function (exports) {
             return (_a = EditorConfig.presetCategories[0].presets.dictionary) === null || _a === void 0 ? void 0 : _a[TypePresets === null || TypePresets === void 0 ? void 0 : TypePresets[instrument]];
         }
     }
-    EditorConfig.version = "1.0.2";
+    EditorConfig.version = "1.0.3";
     EditorConfig.versionDisplayName = "Lunarii's Box " + EditorConfig.version;
     EditorConfig.releaseNotesURL = "./patch_notes.html";
     EditorConfig.isOnMac = /^Mac/i.test(navigator.platform) || /Mac OS X/i.test(navigator.userAgent) || /^(iPhone|iPad|iPod)/i.test(navigator.platform) || /(iPhone|iPad|iPod)/i.test(navigator.userAgent);
@@ -12235,7 +12237,7 @@ var beepbox = (function (exports) {
             this.beatsPerBar = 8;
             this.barCount = 16;
             this.patternsPerChannel = 8;
-            this.rhythm = 1;
+            this.rhythm = 2;
             this.layeredInstruments = false;
             this.patternInstruments = false;
             this.eqFilter.reset();
@@ -13062,7 +13064,7 @@ var beepbox = (function (exports) {
                             }
                         }
                         else {
-                            const parseOldSyntax = beforeThree;
+                            const parseOldSyntax = fromUltraBox && beforeThree;
                             const ok = Song._parseAndConfigureCustomSample(url, customSampleUrls, customSamplePresets, sampleLoadingState, parseOldSyntax);
                             if (!ok) {
                                 continue;
@@ -13970,7 +13972,7 @@ var beepbox = (function (exports) {
                             else {
                                 const instrument = this.channels[instrumentChannelIterator].instruments[instrumentIndexIterator];
                                 instrument.unison = clamp(0, Config.unisons.length + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                const unisonLength = (beforeFive || !fromSlarmoosBox || !fromLunariisBox) ? 27 : Config.unisons.length;
+                                const unisonLength = ((fromSlarmoosBox && beforeFive) || (!fromSlarmoosBox && !fromLunariisBox)) ? 27 : Config.unisons.length;
                                 if (((fromUltraBox && !beforeFive) || fromSlarmoosBox || fromLunariisBox) && (instrument.unison == unisonLength)) {
                                     instrument.unison = Config.unisons.length;
                                     instrument.unisonVoices = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
@@ -14108,7 +14110,7 @@ var beepbox = (function (exports) {
                                         instrument.arpeggioSpeed = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         instrument.fastTwoNoteArp = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) ? true : false;
                                     }
-                                    if (instrument.chord == Config.chords.dictionary["monophonic"].index && (fromSlarmoosBox && !beforeFive) || (fromLunariisBox)) {
+                                    if (instrument.chord == Config.chords.dictionary["monophonic"].index && ((fromSlarmoosBox && !beforeFive) || fromLunariisBox)) {
                                         instrument.monoChordTone = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                     }
                                 }
@@ -14478,7 +14480,7 @@ var beepbox = (function (exports) {
                                 let envelopeDiscrete = false;
                                 if ((fromJummBox && !beforeSix) || (fromUltraBox && !beforeFive) || (fromSlarmoosBox) || (fromLunariisBox)) {
                                     instrument.envelopeSpeed = clamp(0, Config.modulators.dictionary["envelope speed"].maxRawVol + 1, base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
-                                    if ((!fromSlarmoosBox || beforeFive) && (!fromLunariisBox)) {
+                                    if ((!fromSlarmoosBox && !fromLunariisBox) || (fromSlarmoosBox && beforeFive)) {
                                         envelopeDiscrete = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]) ? true : false;
                                     }
                                 }
@@ -14494,24 +14496,24 @@ var beepbox = (function (exports) {
                                         aa = pregoldToEnvelope[aa];
                                     if (fromJummBox)
                                         aa = jummToUltraEnvelope[aa];
-                                    if (!fromSlarmoosBox && !fromLunariisBox && aa >= 2)
+                                    if ((!fromSlarmoosBox && !fromLunariisBox) && aa >= 2)
                                         aa++;
                                     let updatedEnvelopes = false;
                                     let perEnvelopeSpeed = 1;
-                                    if ((!fromSlarmoosBox || beforeThree) || (!fromLunariisBox)) {
+                                    if ((!fromSlarmoosBox && !fromLunariisBox) || (fromSlarmoosBox && beforeThree)) {
                                         updatedEnvelopes = true;
                                         perEnvelopeSpeed = Config.envelopes[aa].speed;
                                         aa = Config.envelopes[aa].type;
                                     }
-                                    else if (beforeFour && aa >= 3)
+                                    else if ((beforeFour && fromSlarmoosBox) && aa >= 3)
                                         aa++;
                                     let isTremolo2 = false;
-                                    if ((fromSlarmoosBox && !beforeThree && beforeFour) || (fromLunariisBox) || updatedEnvelopes) {
+                                    if ((fromSlarmoosBox && !beforeThree && beforeFour) || updatedEnvelopes) {
                                         if (aa == 9)
                                             isTremolo2 = true;
                                         aa = slarURL3toURL4Envelope[aa];
                                     }
-                                    const envelope = clamp(0, (((fromSlarmoosBox && !beforeThree) || (fromLunariisBox) || updatedEnvelopes) ? Config.newEnvelopes.length : Config.envelopes.length), aa);
+                                    const envelope = clamp(0, (((fromSlarmoosBox && !beforeThree) || updatedEnvelopes) ? Config.newEnvelopes.length : Config.envelopes.length), aa);
                                     let pitchEnvelopeStart = 0;
                                     let pitchEnvelopeEnd = Config.maxPitch;
                                     let envelopeInverse = false;
@@ -14572,7 +14574,7 @@ var beepbox = (function (exports) {
                                         }
                                     }
                                     instrument.addEnvelope(target, index, envelope, true, pitchEnvelopeStart, pitchEnvelopeEnd, envelopeInverse, perEnvelopeSpeed, perEnvelopeLowerBound, perEnvelopeUpperBound, steps, seed, waveform, envelopeDiscrete);
-                                    if ((fromSlarmoosBox && beforeThree && !beforeTwo) || (fromLunariisBox)) {
+                                    if ((fromSlarmoosBox && beforeThree && !beforeTwo)) {
                                         let pitchEnvelopeCompact = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         instrument.envelopes[i].pitchEnvelopeStart = pitchEnvelopeCompact * 64 + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                                         pitchEnvelopeCompact = base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
